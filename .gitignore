@@ -1,0 +1,15 @@
+# Environments
+.venv/
+.python-version
+uv.lock
+
+# Python internals
+**/__pycache__/
+*.pyc
+
+# Data folders
+data/transactions
+queries/
+
+# Secrets
+src/historical_transactions/utils/token.txt

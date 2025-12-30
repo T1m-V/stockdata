@@ -1,0 +1,92 @@
+{
+  "GB00BP6MXD84": {
+    "ticker": "SHELL.AS",
+    "name": "Shell PLC",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "FT"]
+  },
+  "IE0009HF1MK9": {
+    "ticker": "WEBG.DE",
+    "name": "Amundi Prime All Country World",
+    "currency": "EUR",
+    "waterfall": ["FT", "Morningstar", "Yahoo"]
+  },
+  "NL0011225305": {
+    "ticker": "0P000160R2.F",
+    "name": "Northern Trust Wld",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "FT", "Morningstar"]
+  },
+  "LU0792910217": {
+    "ticker": "0P0000WH5M.F",
+    "name": "Robeco QI Emerging Conservative",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
+  },
+  "LU0940007189": {
+    "ticker": "0P0000ZE6W.F",
+    "name": "Robeco QI Emergin Active",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
+  },
+  "US45841N1072": {
+    "ticker": "IBKR",
+    "name": "Interactive Brokers Group, Inc.",
+    "currency": "USD",
+    "waterfall": ["Yahoo", "FT"]
+  },
+  "NL0011515424": {
+    "ticker": "0P000172LE.F",
+    "name": "Northern Trust Emerging Mkt",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "FT", "Morningstar"]
+  },
+  "IE00B3FH7618": {
+    "ticker": "IEGE.AS",
+    "name": "iShares € Govt Bond 0-1yr",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "FT", "Morningstar"]
+  },
+  "NL0010273215": {
+    "ticker": "ASML.AS",
+    "name": "ASML Holding N.V.",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "FT"]
+  },
+  "NL0013552078": {
+    "ticker": "0P0001HOLQ.F",
+    "name": "NT World Small Cap",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "FT", "Morningstar"]
+  },
+  "NL0011354865": {
+    "ticker": "ROCO.AS",
+    "name": "Robeco QI Global Developed Conservative",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
+  },
+  "NL0011354873": {
+    "ticker": "ROMF.AS",
+    "name": "Robeco QI Global Multi-Factor",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
+  },
+  "NL0011354972": {
+    "ticker": "0P00016R1Y.F",
+    "name": "Robeco QI Global Developed Conservative",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "FT", "Morningstar"]
+  },
+  "NL0011872643": {
+    "ticker": "ASRNL.AS",
+    "name": "ASR Nederland N.V.",
+    "currency": "EUR",
+    "waterfall": ["Yahoo"]
+  },
+  "NL0011896998": {
+    "ticker": "ROQI.AS",
+    "name": "Robeco QI Global Dev Enhanced Idx",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
+  }
+}
