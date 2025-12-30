@@ -13,7 +13,6 @@ from price_history import (
 from price_history.utils.constants import (
     MAPPING_FILE_PATH,
     PRICE_DATA_PATH,
-    TRANSACTION_DATA_PATH,
 )
 
 HISTORY = 365 * 3
@@ -62,18 +61,13 @@ def update_portfolio_prices() -> None:
     """Updated controller using the waterfall mapping logic."""
 
     # 1. Load Data and Mappings
-    df_tx = pd.read_csv(TRANSACTION_DATA_PATH / "getquin_data.csv")
-    all_isins = df_tx["ISIN"].unique()
     ticker_map = load_ticker_map()
+    all_isins = ticker_map.keys()
 
     print(f"📋 Processing {len(all_isins)} assets via waterfall mapping...")
 
     for isin in all_isins:
         # Skip if ISIN not in our config
-        if isin not in ticker_map:
-            print(f"⚠️ Warning: {isin} not found in ticker_map. Skipping.")
-            continue
-
         asset_config: dict[str, str | list[str]] = ticker_map[isin]
         ticker: str = asset_config.get("ticker")
         waterfall: list[str] = asset_config.get("waterfall", [])

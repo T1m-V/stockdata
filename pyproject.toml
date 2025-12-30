@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "html5lib>=1.1",
     "lxml>=6.0.2",
     "mstarpy>=8.0.3",
     "pandas>=2.3.3",
