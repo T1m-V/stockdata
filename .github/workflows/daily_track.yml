@@ -1,0 +1,49 @@
+name: Price Robot
+
+on:
+  schedule:
+    - cron: '0 21 * * *' # Runs at 21:00 UTC
+  workflow_dispatch:      # Manual trigger
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          version: "latest"
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14' 
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Fetch Prices
+        env:
+          PYTHONPATH: src
+        run: uv run tracker.py
+
+      - name: Save CSV back to GitHub
+        run: |
+          git config --global user.name "Price Robot"
+          git config --global user.email "price-robot@users.noreply.github.com"
+          
+          git add "**/*.csv"
+          
+          if ! git diff --cached --quiet; then
+            echo "📈 Changes detected. Committing updated prices..."
+            git commit -m "🤖 Price Robot: $(date +'%Y-%m-%d %H:%M')"
+            git push
+          else
+            echo "😴 No price changes detected. Nothing to commit."
+          fi
