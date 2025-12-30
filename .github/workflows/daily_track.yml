@@ -23,7 +23,7 @@ jobs:
       - name: Set up Python 3.14
         uses: actions/setup-python@v5
         with:
-          python-version: '3.14' 
+          python-version: '3.14'
 
       - name: Install dependencies
         run: uv sync --frozen
@@ -31,15 +31,15 @@ jobs:
       - name: Fetch Prices
         env:
           PYTHONPATH: src
-        run: uv run tracker.py
+        run: uv run price_robot.py
 
       - name: Save CSV back to GitHub
         run: |
           git config --global user.name "Price Robot"
           git config --global user.email "price-robot@users.noreply.github.com"
-          
+
           git add "**/*.csv"
-          
+
           if ! git diff --cached --quiet; then
             echo "📈 Changes detected. Committing updated prices..."
             git commit -m "🤖 Price Robot: $(date +'%Y-%m-%d %H:%M')"

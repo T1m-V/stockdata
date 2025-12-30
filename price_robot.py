@@ -1,9 +1,3 @@
-import os
-import sys
-
-# Add the 'src' directory to the python path so we can import our modules
-sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
-
 from price_history.retrieve_last_prices import generate_latest_prices_summary
 from price_history.update_all_prices import update_portfolio_prices
 
