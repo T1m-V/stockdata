@@ -2,7 +2,7 @@ name: Price Robot
 
 on:
   schedule:
-    - cron: '0 21 * * *' # Runs at 21:00 UTC
+    - cron: '0 7 * * *' # Runs at 21:00 UTC
   workflow_dispatch:      # Manual trigger
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
       - name: Fetch Prices
         env:
           PYTHONPATH: src
-        run: uv run price_robot.py
+        run: uv run src/price_history/price_robot.py
 
       - name: Save CSV back to GitHub
         run: |
