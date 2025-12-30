@@ -9,7 +9,7 @@
     "ticker": "WEBG.DE",
     "name": "Amundi Prime All Country World",
     "currency": "EUR",
-    "waterfall": ["FT", "Morningstar", "Yahoo"]
+    "waterfall": ["Morningstar", "Yahoo"]
   },
   "NL0011225305": {
     "ticker": "0P000160R2.F",
