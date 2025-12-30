@@ -1,6 +1,6 @@
-from get_price_history_ft import fetch_history_single_stock_ft
-from get_price_history_morningstar import fetch_history_single_stock_morningstar
-from get_price_history_yahoo import fetch_history_single_stock_yahoo
+from price_history.get_price_history_ft import fetch_history_single_stock_ft
+from price_history.get_price_history_morningstar import fetch_history_single_stock_morningstar
+from price_history.get_price_history_yahoo import fetch_history_single_stock_yahoo
 
 __all__ = [
     "fetch_history_single_stock_ft",
