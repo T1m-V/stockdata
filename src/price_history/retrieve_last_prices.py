@@ -41,7 +41,7 @@ def generate_latest_prices_summary() -> None:
         except Exception as e:
             print(f"⚠️ Skipping {file_path.name}: {e}")
 
-    summary_df = pd.DataFrame(summary_data)
+    summary_df = pd.DataFrame(summary_data).sort_values(by="isin", ascending=True)
 
     # Save it back to the same folder (now safe because of the filter above)
     output_path = PRICE_DATA_PATH / SUMMARY_FILENAME
