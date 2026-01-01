@@ -10,12 +10,9 @@ from price_history import (
     fetch_history_single_stock_morningstar,
     fetch_history_single_stock_yahoo,
 )
-from price_history.utils.constants import (
-    MAPPING_FILE_PATH,
-    PRICE_DATA_PATH,
-)
+from price_history.utils.constants import MAPPING_FILE_PATH, PRICE_DATA_PATH
 
-HISTORY = 365 * 3
+HISTORY = 90
 
 
 def load_ticker_map() -> dict[str, str]:

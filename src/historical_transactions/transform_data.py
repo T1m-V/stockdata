@@ -3,11 +3,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from historical_transactions.utils.constants import TRANSACTIONS_DATA_PATH
+from historical_transactions.utils.constants import TRANSACTIONS_DATA_PATH, TRANSACTIONS_FILE
 
 TRANSACTIONS_DATA = TRANSACTIONS_DATA_PATH / "transactions_export.json"
 SPLIT_DATA = TRANSACTIONS_DATA_PATH / "splits_export.json"
-OUTPUT_CSV = TRANSACTIONS_DATA_PATH / "getquin_data.csv"
 
 
 def convert_json_to_csv(tx_file: Path, split_file: Path, output_file: Path) -> None:
@@ -63,9 +62,8 @@ def convert_json_to_csv(tx_file: Path, split_file: Path, output_file: Path) -> N
         "timestamp": "Date",
         "transaction_type": "Type",
         "instrument.name": "Asset Name",
-        "instrument.ticker": "Ticker",
         "instrument.symbol": "ISIN",
-        "units": "Quantity/Ratio",
+        "units": "Quantity",
         "price": "Price",
         "price_currency": "Currency",
         "costs": "Fees",
@@ -93,4 +91,6 @@ def convert_json_to_csv(tx_file: Path, split_file: Path, output_file: Path) -> N
 
 
 if __name__ == "__main__":
-    convert_json_to_csv(tx_file=TRANSACTIONS_DATA, split_file=SPLIT_DATA, output_file=OUTPUT_CSV)
+    convert_json_to_csv(
+        tx_file=TRANSACTIONS_DATA, split_file=SPLIT_DATA, output_file=TRANSACTIONS_FILE
+    )

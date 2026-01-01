@@ -17,4 +17,5 @@ TOKEN = get_token()
 
 BASE_PATH = Path(__file__).parents[3]
 TRANSACTIONS_DATA_PATH = BASE_PATH / "data" / "transactions"
+TRANSACTIONS_FILE = TRANSACTIONS_DATA_PATH / "getquin_data.csv"
 QUERY_PATH = BASE_PATH / "queries"
