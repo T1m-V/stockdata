@@ -50,7 +50,7 @@ def save_and_merge(isin: str, new_data: pd.DataFrame) -> None:
         final_df = pd.concat([existing_df, new_data]).drop_duplicates(subset=["Date"], keep="last")
     else:
         final_df = new_data
-
+    final_df["Price"] = final_df["Price"].round(4)
     final_df.sort_values("Date", ascending=False).to_csv(file_path, index=False)
 
 
