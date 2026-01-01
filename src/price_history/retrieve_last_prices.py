@@ -1,8 +1,6 @@
 import pandas as pd
 
-from price_history.utils.constants import (
-    PRICE_DATA_PATH,
-)
+from price_history.utils.constants import DATA_PATH, PRICE_DATA_PATH
 
 SUMMARY_FILENAME = "latest_prices.csv"
 
@@ -10,7 +8,6 @@ SUMMARY_FILENAME = "latest_prices.csv"
 def generate_latest_prices_summary() -> None:
     """
     Reads all ISIN CSV files and creates a single 'latest_prices.csv'.
-    Excludes the summary file itself if it exists in the same directory.
     """
     summary_data = []
 
@@ -19,7 +16,7 @@ def generate_latest_prices_summary() -> None:
         return
 
     # Filter: Only grab .csv files and exclude the summary file itself
-    csv_files = [f for f in PRICE_DATA_PATH.glob("*.csv") if f.name != SUMMARY_FILENAME]
+    csv_files = [f for f in PRICE_DATA_PATH.glob("*.csv")]
 
     if not csv_files:
         print("⚠️ No price files found to summarize.")
@@ -44,7 +41,7 @@ def generate_latest_prices_summary() -> None:
     summary_df = pd.DataFrame(summary_data).sort_values(by="isin", ascending=True)
 
     # Save it back to the same folder (now safe because of the filter above)
-    output_path = PRICE_DATA_PATH / SUMMARY_FILENAME
+    output_path = DATA_PATH / SUMMARY_FILENAME
     summary_df.to_csv(output_path, index=False)
 
     print(f"✅ Summary saved to: {output_path}")

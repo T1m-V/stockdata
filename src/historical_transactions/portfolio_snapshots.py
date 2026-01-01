@@ -87,7 +87,16 @@ class PortfolioTracker:
         elif tx_type == "DIVIDEND":
             asset.dividend(amount=val * price, taxes=taxes)
 
-        self.history.append(asset.to_snapshot(date))
+        new_snapshot = asset.to_snapshot(date)
+        if (
+            (self.history)
+            and (self.history[-1]["ISIN"] == isin)
+            and (self.history[-1]["Date"] == date)
+        ):
+            self.history[-1] = new_snapshot
+        else:
+            # First transaction of the day for this asset, so append
+            self.history.append(new_snapshot)
 
     def save_to_csv(self, output_path: Path):
         df = pd.DataFrame(self.history)
@@ -99,7 +108,7 @@ class PortfolioTracker:
 def generate_portfolio_snapshots(input_csv: Path, output_csv: Path) -> None:
     df = pd.read_csv(input_csv)
     df["Date"] = pd.to_datetime(df["Date"])
-    df = df.sort_values(by="Date", ascending=True)
+    df = df.sort_values(by=["Date", "ISIN"], ascending=[True, True])
 
     tracker = PortfolioTracker()
     for _, row in df.iterrows():

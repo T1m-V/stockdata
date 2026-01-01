@@ -25,7 +25,7 @@
   },
   "LU0940007189": {
     "ticker": "0P0000ZE6W.F",
-    "name": "Robeco QI Emergin Active",
+    "name": "Robeco QI Emerging Active",
     "currency": "EUR",
     "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
   },
