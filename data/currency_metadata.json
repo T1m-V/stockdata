@@ -27,7 +27,7 @@
     "waterfall": ["Yahoo"],
     "group": "Cryptocurrencies"
   },
-  "EUR_USD": {
+  "USD_EUR": {
     "ticker": "USDEUR=X",
     "name": "US Dollar / Euro",
     "currency": "EUR",

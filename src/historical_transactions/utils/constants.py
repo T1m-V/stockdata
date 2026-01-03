@@ -16,6 +16,9 @@ GETQUIN_URL = "https://api-gql-v2.getquin.com/"
 TOKEN = get_token()
 
 BASE_PATH = Path(__file__).parents[3]
-TRANSACTIONS_DATA_PATH = BASE_PATH / "data" / "transactions"
+DATA_PATH = BASE_PATH / "data"
+STOCK_METADATA_PATH = DATA_PATH / "stock_metadata.json"
+TRANSACTIONS_DATA_PATH = DATA_PATH / "transactions"
+PRICES_PATH = DATA_PATH / "prices"
 TRANSACTIONS_FILE = TRANSACTIONS_DATA_PATH / "getquin_data.csv"
 QUERY_PATH = BASE_PATH / "queries"
