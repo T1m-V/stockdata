@@ -3,15 +3,8 @@ from pathlib import Path
 
 import requests
 
-from historical_transactions.utils.constants import (
-    GETQUIN_URL,
-    QUERY_PATH,
-    TOKEN,
-    TRANSACTIONS_DATA_PATH,
-)
+from file_paths import GETQUIN_URL, TOKEN, TRANSACTION_JSON_PATH, TRANSACTION_QUERY_PATH
 
-TRANSACTION_QUERY = QUERY_PATH / "transactions.txt"
-OUTPUT_FILE = TRANSACTIONS_DATA_PATH / "transactions_export.json"
 MAX_TRANSACTIONS = 500
 
 HEADERS = {
@@ -40,7 +33,7 @@ PAYLOAD = {
         "offset": 0,
         "transaction_type__in": [],
     },
-    "query": TRANSACTION_QUERY.read_text(encoding="utf-8"),
+    "query": TRANSACTION_QUERY_PATH.read_text(encoding="utf-8"),
 }
 
 
@@ -65,4 +58,4 @@ def download_transactions(output_file: Path) -> None:
 
 
 if __name__ == "__main__":
-    download_transactions(output_file=OUTPUT_FILE)
+    download_transactions(output_file=TRANSACTION_JSON_PATH)

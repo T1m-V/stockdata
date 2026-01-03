@@ -1,16 +1,10 @@
-import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
 
-from historical_transactions.utils.constants import (
-    PRICES_PATH,
-    STOCK_METADATA_PATH,
-    TRANSACTIONS_DATA_PATH,
-    TRANSACTIONS_FILE,
-)
+from file_paths import PRICES_FOLDER, SNAPSHOT_FILE_PATH, STOCK_METADATA, TRANSACTIONS_FILE_PATH
 
 
 def get_forex_rate(currency: str, date: str) -> float:
@@ -22,7 +16,7 @@ def get_forex_rate(currency: str, date: str) -> float:
     if currency == "EUR":
         return 1.0
 
-    file_path = PRICES_PATH / f"{currency}_EUR.csv"
+    file_path = PRICES_FOLDER / f"{currency}_EUR.csv"
 
     if not file_path.exists():
         error_msg = f"⚠️ Warning: No forex data for {currency}. Defaulting to 1.0"
@@ -36,11 +30,6 @@ def get_forex_rate(currency: str, date: str) -> float:
     # Find the rate for the specific date or the nearest previous date (as-of)
     rate_row = df_forex[df_forex["Date"] <= target_date].sort_values("Date", ascending=False)
     return rate_row.iloc[0]["Price"]
-
-
-SNAPSHOT_FILE = TRANSACTIONS_DATA_PATH / "portfolio_snapshot.csv"
-with open(STOCK_METADATA_PATH, "r") as f:
-    STOCK_METADATA: dict[str, dict[str, str]] = json.load(f)
 
 
 @dataclass
@@ -164,4 +153,4 @@ def generate_portfolio_snapshots(input_csv: Path, output_csv: Path) -> None:
 
 
 if __name__ == "__main__":
-    generate_portfolio_snapshots(input_csv=TRANSACTIONS_FILE, output_csv=SNAPSHOT_FILE)
+    generate_portfolio_snapshots(input_csv=TRANSACTIONS_FILE_PATH, output_csv=SNAPSHOT_FILE_PATH)

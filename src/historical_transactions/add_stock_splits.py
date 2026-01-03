@@ -4,16 +4,13 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-from historical_transactions.utils.constants import (
+from file_paths import (
     GETQUIN_URL,
-    QUERY_PATH,
+    SPLIT_QUERY_PATH,
+    STOCK_SPLIT_JSON_PATH,
     TOKEN,
-    TRANSACTIONS_DATA_PATH,
+    TRANSACTIONS_FILE_PATH,
 )
-
-TRANSACTION_FILE = TRANSACTIONS_DATA_PATH / "transactions_export.json"
-OUTPUT_FILE = TRANSACTIONS_DATA_PATH / "splits_export.json"
-QUERY_FILE = QUERY_PATH / "stock_split.txt"
 
 HEADERS = {
     "authorization": TOKEN,
@@ -47,9 +44,8 @@ def get_dynamic_parameters(transaction_file: Path) -> tuple[list[str], str, str]
     return isins, start_date, end_date
 
 
-def download_splits(transaction_file: Path, query_file: Path, output_file: Path) -> None:
+def download_splits(transaction_file: Path, output_file: Path) -> None:
     isins, start_date, end_date = get_dynamic_parameters(transaction_file=transaction_file)
-    query = query_file.read_text(encoding="utf-8")
 
     payload = {
         "operationName": "getSplits",
@@ -59,7 +55,7 @@ def download_splits(transaction_file: Path, query_file: Path, output_file: Path)
             "start_date_from": start_date,
             "start_date_to": end_date,
         },
-        "query": query,
+        "query": SPLIT_QUERY_PATH.read_text(encoding="utf-8"),
     }
 
     print("Requesting splits from API...")
@@ -79,6 +75,4 @@ def download_splits(transaction_file: Path, query_file: Path, output_file: Path)
 
 
 if __name__ == "__main__":
-    download_splits(
-        transaction_file=TRANSACTION_FILE, query_file=QUERY_FILE, output_file=OUTPUT_FILE
-    )
+    download_splits(transaction_file=TRANSACTIONS_FILE_PATH, output_file=STOCK_SPLIT_JSON_PATH)

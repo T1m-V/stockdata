@@ -1,37 +1,22 @@
-import json
 import random
 import time
 from datetime import datetime
 
 import pandas as pd
 
+from file_paths import CURRENCY_METADATA, PRICE_DATA_FOLDER, STOCK_METADATA
 from price_history import (
     fetch_history_single_stock_ft,
     fetch_history_single_stock_morningstar,
     fetch_history_single_stock_yahoo,
 )
-from price_history.utils.constants import (
-    CURRENCY_METADATA_PATH,
-    PRICE_DATA_PATH,
-    STOCK_METADATA_PATH,
-)
 
 HISTORY = 15
 
 
-def load_stock_metadata() -> dict[str, str]:
-    with open(STOCK_METADATA_PATH, "r") as f:
-        return json.load(f)
-
-
-def load_currency_metadata() -> dict[str, str]:
-    with open(CURRENCY_METADATA_PATH, "r") as f:
-        return json.load(f)
-
-
 def get_last_update_date(isin: str) -> pd.Timestamp | None:
     """Checks the local CSV to see the date of the most recent entry."""
-    file_path = PRICE_DATA_PATH / f"{isin}.csv"
+    file_path = PRICE_DATA_FOLDER / f"{isin}.csv"
     if not file_path.exists():
         return None
 
@@ -49,7 +34,7 @@ def save_and_merge(isin: str, new_data: pd.DataFrame) -> None:
     if new_data is None or new_data.empty:
         return
 
-    file_path = PRICE_DATA_PATH / f"{isin}.csv"
+    file_path = PRICE_DATA_FOLDER / f"{isin}.csv"
 
     if file_path.exists():
         existing_df = pd.read_csv(file_path)
@@ -65,8 +50,8 @@ def save_and_merge(isin: str, new_data: pd.DataFrame) -> None:
 
 def update_portfolio_prices() -> None:
     # 1. Load Data
-    stock_metadata = load_stock_metadata()
-    currency_metadata = load_currency_metadata()
+    stock_metadata = STOCK_METADATA.copy()
+    currency_metadata = CURRENCY_METADATA.copy()
     all_assets = currency_metadata | stock_metadata
 
     print(f"📋 Processing {len(all_assets)} total assets...")

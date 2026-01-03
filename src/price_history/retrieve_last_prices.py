@@ -1,8 +1,6 @@
 import pandas as pd
 
-from price_history.utils.constants import DATA_PATH, PRICE_DATA_PATH
-
-SUMMARY_FILENAME = "latest_prices.csv"
+from file_paths import PRICE_DATA_FOLDER, SUMMARY_FILE_PATH
 
 
 def generate_latest_prices_summary() -> None:
@@ -11,12 +9,12 @@ def generate_latest_prices_summary() -> None:
     """
     summary_data = []
 
-    if not PRICE_DATA_PATH.exists():
+    if not PRICE_DATA_FOLDER.exists():
         print("❌ Price data directory does not exist.")
         return
 
     # Filter: Only grab .csv files and exclude the summary file itself
-    csv_files = [f for f in PRICE_DATA_PATH.glob("*.csv")]
+    csv_files = [f for f in PRICE_DATA_FOLDER.glob("*.csv")]
 
     if not csv_files:
         print("⚠️ No price files found to summarize.")
@@ -41,10 +39,9 @@ def generate_latest_prices_summary() -> None:
     summary_df = pd.DataFrame(summary_data).sort_values(by="isin", ascending=True)
 
     # Save it back to the same folder (now safe because of the filter above)
-    output_path = DATA_PATH / SUMMARY_FILENAME
-    summary_df.to_csv(output_path, index=False)
+    summary_df.to_csv(SUMMARY_FILE_PATH, index=False)
 
-    print(f"✅ Summary saved to: {output_path}")
+    print(f"✅ Summary saved to: {SUMMARY_FILE_PATH}")
 
 
 if __name__ == "__main__":
