@@ -1,17 +1,25 @@
 import random
 import time
 from datetime import datetime
+from functools import lru_cache
 
 import pandas as pd
 
 from file_paths import CURRENCY_METADATA, PRICE_DATA_FOLDER, STOCK_METADATA
 from price_history import (
+    fetch_history_defillama,
     fetch_history_single_stock_ft,
     fetch_history_single_stock_morningstar,
     fetch_history_single_stock_yahoo,
 )
 
-HISTORY = 15
+HISTORY = 10
+
+
+@lru_cache(maxsize=1)
+def load_all_metadata():
+    """Caches the combined metadata to avoid repeated dictionary merges."""
+    return CURRENCY_METADATA.copy() | STOCK_METADATA.copy()
 
 
 def get_last_update_date(isin: str) -> pd.Timestamp | None:
@@ -44,22 +52,19 @@ def save_and_merge(isin: str, new_data: pd.DataFrame) -> None:
         final_df = pd.concat([existing_df, new_data]).drop_duplicates(subset=["Date"], keep="last")
     else:
         final_df = new_data
+
     final_df["Price"] = final_df["Price"].round(4)
-    final_df.sort_values("Date", ascending=False).to_csv(file_path, index=False)
+    final_df[["Date", "Price"]].sort_values("Date", ascending=False).to_csv(file_path, index=False)
 
 
 def update_portfolio_prices() -> None:
-    # 1. Load Data
-    stock_metadata = STOCK_METADATA.copy()
-    currency_metadata = CURRENCY_METADATA.copy()
-    all_assets = currency_metadata | stock_metadata
+    all_assets = load_all_metadata()
 
     print(f"📋 Processing {len(all_assets)} total assets...")
 
     for identifier, asset_config in all_assets.items():
         ticker = asset_config.get("ticker")
         waterfall = asset_config.get("waterfall", [])
-
         last_date = get_last_update_date(identifier)
         now = datetime.now()
 
@@ -67,7 +72,6 @@ def update_portfolio_prices() -> None:
         success = False
         skip_sleep = False
 
-        # 2. Iterate through the waterfall
         for source in waterfall:
             try:
                 if source == "Yahoo" and ticker:
@@ -75,10 +79,12 @@ def update_portfolio_prices() -> None:
                     new_data = fetch_history_single_stock_yahoo(
                         isin=identifier, ticker=ticker, days_back=HISTORY
                     )
-
-                    # Yahoo is fast/official, so we skip sleep if it works
                     if (new_data is not None) and (not new_data.empty):
                         skip_sleep = True
+
+                elif source == "Llama":
+                    print(f"🦙 {identifier}: Fetching from DeFiLlama...")
+                    new_data = fetch_history_defillama(ticker=ticker, days_back=HISTORY)
 
                 elif source == "FT":
                     if last_date and (now - last_date).days < 30:
@@ -106,7 +112,6 @@ def update_portfolio_prices() -> None:
         if not success:
             print(f"🛑 Failed to update {identifier} after exhausting: {waterfall}")
 
-        # Polite delay for non-Yahoo sources or failed attempts
         if not skip_sleep:
             time.sleep(random.uniform(2, 4))
 
