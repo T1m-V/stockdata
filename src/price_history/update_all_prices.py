@@ -10,13 +10,22 @@ from price_history import (
     fetch_history_single_stock_morningstar,
     fetch_history_single_stock_yahoo,
 )
-from price_history.utils.constants import MAPPING_FILE_PATH, PRICE_DATA_PATH
+from price_history.utils.constants import (
+    CURRENCY_METADATA_PATH,
+    PRICE_DATA_PATH,
+    STOCK_METADATA_PATH,
+)
 
-HISTORY = 30
+HISTORY = 15
 
 
-def load_ticker_map() -> dict[str, str]:
-    with open(MAPPING_FILE_PATH, "r") as f:
+def load_stock_metadata() -> dict[str, str]:
+    with open(STOCK_METADATA_PATH, "r") as f:
+        return json.load(f)
+
+
+def load_currency_metadata() -> dict[str, str]:
+    with open(CURRENCY_METADATA_PATH, "r") as f:
         return json.load(f)
 
 
@@ -55,21 +64,18 @@ def save_and_merge(isin: str, new_data: pd.DataFrame) -> None:
 
 
 def update_portfolio_prices() -> None:
-    """Updated controller using the waterfall mapping logic."""
+    # 1. Load Data
+    stock_metadata = load_stock_metadata()
+    currency_metadata = load_currency_metadata()
+    all_assets = currency_metadata | stock_metadata
 
-    # 1. Load Data and Mappings
-    ticker_map = load_ticker_map()
-    all_isins = ticker_map.keys()
+    print(f"📋 Processing {len(all_assets)} total assets...")
 
-    print(f"📋 Processing {len(all_isins)} assets via waterfall mapping...")
+    for identifier, asset_config in all_assets.items():
+        ticker = asset_config.get("ticker")
+        waterfall = asset_config.get("waterfall", [])
 
-    for isin in all_isins:
-        # Skip if ISIN not in our config
-        asset_config: dict[str, str | list[str]] = ticker_map[isin]
-        ticker: str = asset_config.get("ticker")
-        waterfall: list[str] = asset_config.get("waterfall", [])
-
-        last_date = get_last_update_date(isin)
+        last_date = get_last_update_date(identifier)
         now = datetime.now()
 
         new_data = None
@@ -80,48 +86,44 @@ def update_portfolio_prices() -> None:
         for source in waterfall:
             try:
                 if source == "Yahoo" and ticker:
-                    print(f"🔍 {isin}: Trying Yahoo Finance...")
+                    print(f"🔍 {identifier}: Trying Yahoo Finance...")
                     new_data = fetch_history_single_stock_yahoo(
-                        isin=isin, ticker=ticker, days_back=HISTORY
+                        isin=identifier, ticker=ticker, days_back=HISTORY
                     )
+
+                    # Yahoo is fast/official, so we skip sleep if it works
                     if (new_data is not None) and (not new_data.empty):
                         skip_sleep = True
 
                 elif source == "FT":
-                    # Applying your specific logic: Check for freshness gap
                     if last_date and (now - last_date).days < 30:
-                        print(f"🔄 {isin}: Recent data exists. Using FT.")
-                        new_data = fetch_history_single_stock_ft(isin)
+                        print(f"🔄 {identifier}: Using FT.")
+                        new_data = fetch_history_single_stock_ft(identifier)
                     else:
-                        print(f"⏩ {isin}: Data gap too large for FT. Skipping to next source.")
+                        print(f"⏩ {identifier}: Data gap too large for FT.")
                         continue
 
                 elif source == "Morningstar":
-                    print(f"🚀 {isin}: Fetching from Morningstar...")
-                    new_data = fetch_history_single_stock_morningstar(isin=isin, days_back=HISTORY)
+                    print(f"🚀 {identifier}: Fetching from Morningstar...")
+                    new_data = fetch_history_single_stock_morningstar(
+                        isin=identifier, days_back=HISTORY
+                    )
 
-                elif source == "Evi":
-                    print(f"🏦 {isin}: Fetching from Evi...")
-                    print("Not integrated yet.")
-                    continue
-
-                # 3. If we got data, save and break the waterfall loop
                 if (new_data is not None) and (not new_data.empty):
-                    save_and_merge(isin=isin, new_data=new_data)
+                    save_and_merge(isin=identifier, new_data=new_data)
                     success = True
-                    print("")
                     break
 
             except Exception as e:
-                print(f"❌ Error fetching {isin} from {source}: {e}")
-                continue  # Try the next source in the waterfall
+                print(f"❌ Error fetching {identifier} from {source}: {e}")
+                continue
 
         if not success:
-            print(f"🛑 Failed to update {isin} after exhausting all sources: {waterfall}")
+            print(f"🛑 Failed to update {identifier} after exhausting: {waterfall}")
 
-        # Polite delay to prevent IP blocking
+        # Polite delay for non-Yahoo sources or failed attempts
         if not skip_sleep:
-            time.sleep(random.uniform(2, 5))
+            time.sleep(random.uniform(2, 4))
 
     print("\n✨ Portfolio Update Complete.")
 

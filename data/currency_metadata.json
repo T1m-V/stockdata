@@ -1,0 +1,37 @@
+{
+  "BTC": {
+    "ticker": "BTC-USD",
+    "name": "Bitcoin",
+    "currency": "USD",
+    "waterfall": ["Yahoo"],
+    "group": "Cryptocurrencies"
+  },
+  "ETH": {
+    "ticker": "ETH-USD",
+    "name": "Ethereum",
+    "currency": "USD",
+    "waterfall": ["Yahoo"],
+    "group": "Cryptocurrencies"
+  },
+  "NEXO": {
+    "ticker": "NEXO-USD",
+    "name": "Nexo",
+    "currency": "USD",
+    "waterfall": ["Yahoo"],
+    "group": "Cryptocurrencies"
+  },
+  "CRO": {
+    "ticker": "CRO-USD",
+    "name": "Cronos",
+    "currency": "USD",
+    "waterfall": ["Yahoo"],
+    "group": "Cryptocurrencies"
+  },
+  "EUR_USD": {
+    "ticker": "USDEUR=X",
+    "name": "US Dollar / Euro",
+    "currency": "EUR",
+    "waterfall": ["Yahoo"],
+    "group": "Cash"
+  }
+}
