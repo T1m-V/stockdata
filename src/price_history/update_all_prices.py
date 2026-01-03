@@ -12,7 +12,7 @@ from price_history import (
 )
 from price_history.utils.constants import MAPPING_FILE_PATH, PRICE_DATA_PATH
 
-HISTORY = 90
+HISTORY = 30
 
 
 def load_ticker_map() -> dict[str, str]:
