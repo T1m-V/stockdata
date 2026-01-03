@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "dash>=3.3.0",
+    "dash-bootstrap-components>=2.0.4",
     "html5lib>=1.1",
     "lxml>=6.0.2",
     "mstarpy>=8.0.3",

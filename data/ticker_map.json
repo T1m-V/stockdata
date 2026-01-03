@@ -3,90 +3,135 @@
     "ticker": "SHELL.AS",
     "name": "Shell PLC",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "FT"]
+    "waterfall": ["Yahoo", "FT"],
+    "region": "EUROPE",
+    "group": "Stocks",
+    "provider": "Direct Holding"
   },
   "IE0009HF1MK9": {
     "ticker": "WEBG.DE",
     "name": "Amundi Prime All Country World",
     "currency": "EUR",
-    "waterfall": ["Morningstar", "Yahoo"]
+    "waterfall": ["Morningstar", "Yahoo"],
+    "region": "ALL_WORLD",
+    "group": "Funds/ETFs",
+    "provider": "Amundi"
   },
   "NL0011225305": {
     "ticker": "0P000160R2.F",
     "name": "Northern Trust Wld",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "FT", "Morningstar"]
+    "waterfall": ["Yahoo", "FT", "Morningstar"],
+    "region": "DEVELOPED",
+    "group": "Funds/ETFs",
+    "provider": "Northern Trust"
   },
   "LU0792910217": {
     "ticker": "0P0000WH5M.F",
     "name": "Robeco QI Emerging Conservative",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
+    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"],
+    "region": "EMERGING",
+    "group": "Funds/ETFs",
+    "provider": "Robeco"
   },
   "LU0940007189": {
     "ticker": "0P0000ZE6W.F",
     "name": "Robeco QI Emerging Active",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
+    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"],
+    "region": "EMERGING",
+    "group": "Funds/ETFs",
+    "provider": "Robeco"
   },
   "US45841N1072": {
     "ticker": "IBKR",
     "name": "Interactive Brokers Group, Inc.",
     "currency": "USD",
-    "waterfall": ["Yahoo", "FT"]
+    "waterfall": ["Yahoo", "FT"],
+    "region": "US",
+    "group": "Stocks",
+    "provider": "Direct Holding"
   },
   "NL0011515424": {
     "ticker": "0P000172LE.F",
     "name": "Northern Trust Emerging Mkt",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "FT", "Morningstar"]
+    "waterfall": ["Yahoo", "FT", "Morningstar"],
+    "region": "EMERGING",
+    "group": "Funds/ETFs",
+    "provider": "Northern Trust"
   },
   "IE00B3FH7618": {
     "ticker": "IEGE.AS",
-    "name": "iShares € Govt Bond 0-1yr",
+    "name": "iShares EURO Govt Bond 0-1yr",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "FT", "Morningstar"]
+    "waterfall": ["Yahoo", "FT", "Morningstar"],
+    "region": "EUROPE",
+    "group": "Bonds",
+    "provider": "iShares"
   },
   "NL0010273215": {
     "ticker": "ASML.AS",
     "name": "ASML Holding N.V.",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "FT"]
+    "waterfall": ["Yahoo", "FT"],
+    "region": "EUROPE",
+    "group": "Stocks",
+    "provider": "Direct Holding"
   },
   "NL0013552078": {
     "ticker": "0P0001HOLQ.F",
     "name": "NT World Small Cap",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "FT", "Morningstar"]
+    "waterfall": ["Yahoo", "FT", "Morningstar"],
+    "region": "DEVELOPED",
+    "group": "Funds/ETFs",
+    "provider": "Northern Trust"
   },
   "NL0011354865": {
     "ticker": "ROCO.AS",
     "name": "Robeco QI Global Developed Conservative",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
+    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"],
+    "region": "DEVELOPED",
+    "group": "Funds/ETFs",
+    "provider": "Robeco"
   },
   "NL0011354873": {
     "ticker": "ROMF.AS",
     "name": "Robeco QI Global Multi-Factor",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
+    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"],
+    "region": "DEVELOPED",
+    "group": "Funds/ETFs",
+    "provider": "Robeco"
   },
   "NL0011354972": {
     "ticker": "0P00016R1Y.F",
     "name": "Robeco QI Global Developed Conservative",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "FT", "Morningstar"]
+    "waterfall": ["Yahoo", "FT", "Morningstar"],
+    "region": "DEVELOPED",
+    "group": "Funds/ETFs",
+    "provider": "Robeco"
   },
   "NL0011872643": {
     "ticker": "ASRNL.AS",
     "name": "ASR Nederland N.V.",
     "currency": "EUR",
-    "waterfall": ["Yahoo"]
+    "waterfall": ["Yahoo"],
+    "region": "EUROPE",
+    "group": "Stocks",
+    "provider": "Direct Holding"
   },
   "NL0011896998": {
     "ticker": "ROQI.AS",
     "name": "Robeco QI Global Dev Enhanced Idx",
     "currency": "EUR",
-    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"]
+    "waterfall": ["Yahoo", "Evi", "FT", "Morningstar"],
+    "region": "DEVELOPED",
+    "group": "Funds/ETFs",
+    "provider": "Robeco"
   }
 }
