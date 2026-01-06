@@ -63,6 +63,9 @@ def update_portfolio_prices() -> None:
     print(f"📋 Processing {len(all_assets)} total assets...")
 
     for identifier, asset_config in all_assets.items():
+        active = asset_config.get("active", True)
+        if not active:
+            continue
         ticker = asset_config.get("ticker")
         waterfall = asset_config.get("waterfall", [])
         last_date = get_last_update_date(identifier)
