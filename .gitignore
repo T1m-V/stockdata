@@ -11,4 +11,4 @@ data/transactions
 queries/
 
 # Secrets
-src/historical_transactions/utils/token.txt
+src/file_paths/token.txt
