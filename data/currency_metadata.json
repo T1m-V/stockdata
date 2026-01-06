@@ -47,5 +47,13 @@
     "currency": "USD",
     "waterfall": ["Llama"],
     "group": "Liquidity Pools"
+  },
+  "GLP": {
+    "ticker": "arbitrum:0x4277f8F2c384827B5273592FF7CeBd9f2C1ac258",
+    "name": "GLP",
+    "currency": "USD",
+    "waterfall": ["Llama"],
+    "group": "Liquidity Pools",
+    "active": false
   }
 }
