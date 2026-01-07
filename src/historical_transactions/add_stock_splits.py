@@ -8,12 +8,12 @@ from file_paths import (
     GETQUIN_URL,
     SPLIT_QUERY_PATH,
     STOCK_SPLIT_JSON_PATH,
-    TOKEN,
     TRANSACTIONS_FILE_PATH,
+    get_token,
 )
 
 HEADERS = {
-    "authorization": TOKEN,
+    "authorization": get_token(),
     "content-type": "application/json",
     "accept": "*/*",
     "user-agent": (

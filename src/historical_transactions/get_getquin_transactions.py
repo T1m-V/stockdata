@@ -3,7 +3,7 @@ from pathlib import Path
 
 import requests
 
-from file_paths import GETQUIN_URL, TOKEN, TRANSACTION_JSON_PATH, TRANSACTION_QUERY_PATH
+from file_paths import GETQUIN_URL, TRANSACTION_JSON_PATH, TRANSACTION_QUERY_PATH, get_token
 
 MAX_TRANSACTIONS = 500
 
@@ -12,7 +12,7 @@ HEADERS = {
     "accept-language": "en",
     "apollographql-client-name": "web",
     "apollographql-client-version": "2.213.2",
-    "authorization": TOKEN,
+    "authorization": get_token(),
     "content-type": "application/json",
     "priority": "u=1, i",
     "sec-ch-ua": '"Microsoft Edge";v="143", "Chromium";v="143", "Not A(Brand";v="24"',

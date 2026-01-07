@@ -14,7 +14,6 @@ def get_token():
 
 
 GETQUIN_URL = "https://api-gql-v2.getquin.com/"
-TOKEN = get_token()
 
 # Main paths
 BASE_FOLDER = Path(__file__).parents[2]
