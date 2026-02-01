@@ -45,3 +45,10 @@ with open(STOCK_METADATA_PATH, "r") as f:
 
 with open(CURRENCY_METADATA_PATH, "r") as f:
     CURRENCY_METADATA: dict[str, dict[str, str]] = json.load(f)
+
+# Blockchain related paths
+BLOCKCHAIN_FOLDER = DATA_FOLDER / "blockchain"
+CHAIN_INFO_PATH = BLOCKCHAIN_FOLDER / "chain_info.json"
+TOKENS_FOLDER = BLOCKCHAIN_FOLDER / "tokens"
+TRANSACTIONS_FOLDER = BLOCKCHAIN_FOLDER / "transactions"
+BLOCKCHAIN_READER_TESTS_PATH = BASE_FOLDER / "src" / "blockchain_reader" / "tests"

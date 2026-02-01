@@ -5,10 +5,11 @@
 # Python internals
 **/__pycache__/
 *.pyc
+STYLEGUIDE.md
 
 # Data folders
 data/transactions
-queries/
+data/blockchain
 
 # Secrets
 src/file_paths/token.txt

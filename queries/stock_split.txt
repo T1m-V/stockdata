@@ -1,0 +1,14 @@
+query getSplits($isin__in: [String], $start_date_from: String, $start_date_to: String, $include_future: Boolean) {
+    splits: getSplits(
+    isin__in: $isin__in
+    start_date_from: $start_date_from
+    start_date_to: $start_date_to
+    include_future: $include_future
+    ) {
+    denominator
+    isin
+    numerator
+    start_date
+    __typename
+    }
+}

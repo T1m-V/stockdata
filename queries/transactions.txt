@@ -1,0 +1,60 @@
+query getDashboardAggregatedTransactions($limit: Int, $offset: Int, $transaction_type__in: [String], $isin__in: [String], $shared_access_id: ID) {
+  transactions: getDashboardAggregatedTransactions(
+    limit: $limit
+    offset: $offset
+    transaction_type__in: $transaction_type__in
+    isin__in: $isin__in
+    shared_access_id: $shared_access_id
+  ) {
+    count
+    results {
+      ...Transaction
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment BaseInstrument on Instrument {
+  category
+  logo
+  logo_dark
+  name
+  short_name
+  symbol
+  ticker
+  primary_slug
+  __typename
+}
+
+fragment Transaction on Transaction {
+  id
+  description
+  is_price_estimated
+  is_timestamp_estimated
+  isin
+  price
+  security_name
+  source
+  costs
+  taxes
+  timestamp
+  transaction_type
+  units
+  dashboard
+  destination {
+    ... on BlockchainDestination {
+      address
+      __typename
+    }
+    __typename
+  }
+  costs_currency
+  price_currency
+  taxes_currency
+  instrument {
+    ...BaseInstrument
+    __typename
+  }
+  __typename
+}
