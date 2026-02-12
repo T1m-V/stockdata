@@ -133,5 +133,14 @@
     "region": "DEVELOPED",
     "group": "Funds/ETFs",
     "provider": "Robeco"
+  },
+  "LU1931974262": {
+    "ticker": "PR1E.DE",
+    "name": "Amundi Prime Europe UCITS ETF",
+    "currency": "EUR",
+    "waterfall": ["Yahoo", "FT", "Morningstar"],
+    "region": "EUROPE",
+    "group": "Funds/ETFs",
+    "provider": "Amundi"
   }
 }
