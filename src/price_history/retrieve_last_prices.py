@@ -1,47 +1,66 @@
+from pathlib import Path
+
 import pandas as pd
 
 from file_paths import PRICE_DATA_FOLDER, SUMMARY_FILE_PATH
 
+SUMMARY_COLUMNS = ["date", "isin", "price"]
 
-def generate_latest_prices_summary() -> None:
-    """
-    Reads all ISIN CSV files and creates a single 'latest_prices.csv'.
-    """
-    summary_data = []
 
+def _list_price_files(price_folder: Path) -> list[Path]:
+    return sorted(price_folder.glob("*.csv"))
+
+
+def _read_latest_row(file_path: Path) -> dict[str, str | float] | None:
+    try:
+        frame = pd.read_csv(file_path, nrows=1)
+    except Exception as exc:
+        print(f"Skipping {file_path.name}: {exc}")
+        return None
+
+    if frame.empty:
+        return None
+
+    return {
+        "date": frame.iloc[0]["Date"],
+        "isin": file_path.stem,
+        "price": frame.iloc[0]["Price"],
+    }
+
+
+def generate_latest_prices_summary() -> pd.DataFrame:
+    """
+    Reads all local price CSV files and writes latest_prices.csv.
+
+    returns:
+        Generated summary frame.
+    """
     if not PRICE_DATA_FOLDER.exists():
-        print("❌ Price data directory does not exist.")
-        return
+        print("Price data directory does not exist.")
+        return pd.DataFrame(columns=SUMMARY_COLUMNS)
 
-    # Filter: Only grab .csv files and exclude the summary file itself
-    csv_files = [f for f in PRICE_DATA_FOLDER.glob("*.csv")]
-
+    csv_files = _list_price_files(price_folder=PRICE_DATA_FOLDER)
     if not csv_files:
-        print("⚠️ No price files found to summarize.")
-        return
+        print("No price files found to summarize.")
+        return pd.DataFrame(columns=SUMMARY_COLUMNS)
 
-    print(f"📊 Generating summary for {len(csv_files)} assets...")
+    print(f"Generating latest summary for {len(csv_files)} assets...")
 
+    summary_rows = []
     for file_path in csv_files:
-        try:
-            # nrows=1 is efficient; it only reads the header and first data row
-            df = pd.read_csv(file_path, nrows=1)
+        row = _read_latest_row(file_path=file_path)
+        if row is not None:
+            summary_rows.append(row)
 
-            if not df.empty:
-                isin = file_path.stem
-                latest_date = df.iloc[0]["Date"]
-                latest_price = df.iloc[0]["Price"]
+    summary_frame = pd.DataFrame(summary_rows, columns=SUMMARY_COLUMNS)
+    if summary_frame.empty:
+        summary_frame = pd.DataFrame(columns=SUMMARY_COLUMNS)
+    else:
+        summary_frame = summary_frame.sort_values(by="isin", ascending=True)
 
-                summary_data.append({"date": latest_date, "isin": isin, "price": latest_price})
-        except Exception as e:
-            print(f"⚠️ Skipping {file_path.name}: {e}")
-
-    summary_df = pd.DataFrame(summary_data).sort_values(by="isin", ascending=True)
-
-    # Save it back to the same folder (now safe because of the filter above)
-    summary_df.to_csv(SUMMARY_FILE_PATH, index=False)
-
-    print(f"✅ Summary saved to: {SUMMARY_FILE_PATH}")
+    summary_frame.to_csv(SUMMARY_FILE_PATH, index=False)
+    print(f"Summary saved to: {SUMMARY_FILE_PATH}")
+    return summary_frame
 
 
 if __name__ == "__main__":

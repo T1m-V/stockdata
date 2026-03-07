@@ -21,6 +21,9 @@ dependencies = [
     "yfinance>=1.0",
 ]
 
+[project.scripts]
+price_robot = "price_history.price_robot:main"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
