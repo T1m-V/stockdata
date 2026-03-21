@@ -7,10 +7,12 @@
 *.pyc
 STYLEGUIDE.md
 AGENTS.md
+checklist.md
 
 # Data folders
 data/transactions
 data/blockchain
+data/real_estate
 
 # Secrets
 src/file_paths/token.txt
