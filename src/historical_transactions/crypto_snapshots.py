@@ -152,7 +152,6 @@ class CryptoTracker:
         self.token_metadata = token_metadata or _load_token_metadata(chain=chain)
         self.symbol_to_meta: dict[str, dict[str, Any]] = {}
         self.symbol_family: dict[str, str] = {}
-        self.aave_wrapper_symbols: set[str] = set()
 
         for meta in self.token_metadata.values():
             symbol = sanitize_symbol(meta.get("symbol"))
@@ -163,9 +162,6 @@ class CryptoTracker:
 
             family = sanitize_symbol(meta.get("family")) or symbol
             self.symbol_family[symbol] = family
-
-            if meta.get("protocol") == "aave":
-                self.aave_wrapper_symbols.add(symbol)
 
         self.assets: dict[str, CryptoPosition] = {}
         self.history: list[dict] = []
@@ -194,17 +190,6 @@ class CryptoTracker:
                 self.assets[asset_key].family_proxy = self.fetch_asset(family_coin)
 
         return self.assets[asset_key]
-
-    def _filter_aave_wrapper_entries(self, entries: list[TxEntry]) -> tuple[list[TxEntry], int]:
-        filtered: list[TxEntry] = []
-        for entry in entries:
-            token = sanitize_symbol(entry.token)
-            if token in self.aave_wrapper_symbols:
-                continue
-            filtered.append(
-                TxEntry(token=token or entry.token, quantity=entry.quantity, val=entry.val)
-            )
-        return filtered
 
     def _collect_snapshots(self, asset: CryptoPosition, date: str) -> list[dict]:
         snaps = [asset.to_snapshot(date)]
