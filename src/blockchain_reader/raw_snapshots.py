@@ -1,5 +1,3 @@
-import functools
-import json
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
@@ -7,49 +5,19 @@ from typing import Any
 
 import pandas as pd
 
+from blockchain_reader.shared.prices import (
+    STABLE_PRICE_SYMBOLS,
+    get_price_eur_on_or_before,
+)
+from blockchain_reader.shared.token_metadata import load_token_metadata
 from blockchain_reader.symbols import canonicalize_symbol, sanitize_symbol
 from file_paths import (
     BLOCKCHAIN_SNAPSHOT_FOLDER,
     BLOCKCHAIN_TRANSACTIONS_FOLDER,
-    CURRENCY_METADATA,
     PRICES_FOLDER,
     TOKENS_FOLDER,
 )
 from historical_transactions.portfolio_snapshots import get_forex_rate
-
-STABLE_LIST = ["USDC", "USDT"]
-
-
-def _load_token_metadata(chain: str) -> dict[str, dict[str, Any]]:
-    token_file = TOKENS_FOLDER / f"{chain}_tokens.json"
-    if not token_file.exists():
-        return {}
-    with open(token_file, "r") as f:
-        raw = json.load(f)
-    return {str(addr).lower(): meta for addr, meta in raw.items() if isinstance(meta, dict)}
-
-
-@functools.lru_cache(maxsize=None)
-def get_price_history(coin: str) -> pd.DataFrame:
-    """Loads the history of prices for a specific coin.
-
-    Args:
-        coin: The coin you want the history for.
-
-    Returns:
-        Price history of requested coin.
-    """
-    if coin in STABLE_LIST:
-        return pd.DataFrame({"Date": [pd.to_datetime("2000-01-01").date()], "Price": [1.0]})
-
-    file_path = PRICES_FOLDER / f"{coin}.csv"
-    if not file_path.exists():
-        print(f"⚠️ Warning: No data for {coin}. Assuming value is 0.")
-        return pd.DataFrame({"Date": [pd.to_datetime("2000-01-01").date()], "Price": [0.0]})
-
-    df = pd.read_csv(file_path)
-    df["Date"] = pd.to_datetime(df["Date"]).dt.date
-    return df.sort_values("Date", ascending=True)
 
 
 def get_crypto_price(coin: str, date: str) -> float:
@@ -62,25 +30,28 @@ def get_crypto_price(coin: str, date: str) -> float:
     Returns:
         Crypto price on the requested date.
     """
-    coin_prices = get_price_history(coin)
-    target_date = pd.to_datetime(date).date()
+    price = get_price_eur_on_or_before(
+        symbol=coin,
+        as_of_date=date,
+        prices_folder=PRICES_FOLDER,
+        fallback_to_oldest=False,
+    )
+    if price is not None:
+        return float(price)
 
-    # Find nearest date on or before target
-    rate_row = coin_prices[coin_prices["Date"] <= target_date]
+    oldest_price = get_price_eur_on_or_before(
+        symbol=coin,
+        as_of_date=date,
+        prices_folder=PRICES_FOLDER,
+        fallback_to_oldest=True,
+    )
+    if oldest_price is not None:
+        if coin not in STABLE_PRICE_SYMBOLS:
+            print(f"Warning: No price found for {coin} on/before {date}. Using oldest known price.")
+        return float(oldest_price)
 
-    if rate_row.empty:
-        # Fallback: Warning or use the oldest available date
-        if coin not in STABLE_LIST:
-            print(f"⚠️ No price found for {coin} on/before {date}. Using oldest known price.")
-        price = coin_prices.iloc[0]["Price"]
-    else:
-        # Get the last row (closest date)
-        price = rate_row.iloc[-1]["Price"]
-
-    currency_type = CURRENCY_METADATA.get(coin, {}).get("currency", "USD")
-    conversion = get_forex_rate(currency=currency_type, date=date)
-
-    return price * conversion
+    print(f"Warning: No data for {coin}. Assuming value is 0.")
+    return 0.0
 
 
 @dataclass
@@ -149,7 +120,10 @@ class TxEntry:
 class CryptoTracker:
     def __init__(self, chain: str, token_metadata: dict[str, dict[str, Any]] | None = None):
         self.chain = chain
-        self.token_metadata = token_metadata or _load_token_metadata(chain=chain)
+        self.token_metadata = token_metadata or load_token_metadata(
+            chain=chain,
+            tokens_folder=TOKENS_FOLDER,
+        )
         self.symbol_to_meta: dict[str, dict[str, Any]] = {}
         self.symbol_family: dict[str, str] = {}
 
@@ -449,7 +423,7 @@ class CryptoTracker:
         print(f"Portfolio snapshots successfully saved to {output_path}")
 
 
-def generate_portfolio_snapshots(input_csv: Path, output_csv: Path, chain: str) -> None:
+def generate_raw_snapshots(input_csv: Path, output_csv: Path, chain: str) -> None:
     df = pd.read_csv(input_csv, dtype=str)
     df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
     df = df.dropna(subset=["Date"])
@@ -463,8 +437,8 @@ def generate_portfolio_snapshots(input_csv: Path, output_csv: Path, chain: str) 
 
 
 if __name__ == "__main__":
-    generate_portfolio_snapshots(
+    generate_raw_snapshots(
         input_csv=BLOCKCHAIN_TRANSACTIONS_FOLDER / "arbitrum_transactions.csv",
-        output_csv=BLOCKCHAIN_SNAPSHOT_FOLDER / "arbitrum_snapshots.csv",
+        output_csv=BLOCKCHAIN_SNAPSHOT_FOLDER / "arbitrum_raw_snapshots.csv",
         chain="arbitrum",
     )
