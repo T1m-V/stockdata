@@ -19,6 +19,7 @@ GETQUIN_URL = "https://api-gql-v2.getquin.com/"
 BASE_FOLDER = Path(__file__).parents[2]
 DATA_FOLDER = BASE_FOLDER / "data"
 PRICES_FOLDER = DATA_FOLDER / "prices"
+LP_PRICES_FOLDER = PRICES_FOLDER / "lp_prices"
 QUERY_FOLDER = BASE_FOLDER / "queries"
 
 PRICE_DATA_FOLDER = DATA_FOLDER / "prices"
@@ -34,6 +35,22 @@ STOCK_SPLIT_JSON_PATH = TRANSACTION_DATA_FOLDER / "splits_export.json"
 TRANSACTIONS_FILE_PATH = TRANSACTION_DATA_FOLDER / "getquin_data.csv"
 SNAPSHOT_FILE_PATH = TRANSACTION_DATA_FOLDER / "portfolio_snapshot.csv"
 SUMMARY_FILE_PATH = DATA_FOLDER / "latest_prices.csv"
+
+
+def get_direct_price_file_path(symbol: str, prices_folder: Path | None = None) -> Path:
+    root = prices_folder or PRICES_FOLDER
+    return root / f"{symbol}.csv"
+
+
+def get_lp_price_file_path(
+    *,
+    chain: str,
+    symbol: str,
+    prices_folder: Path | None = None,
+) -> Path:
+    root = prices_folder or PRICES_FOLDER
+    return root / "lp_prices" / chain / f"{symbol}.csv"
+
 
 # Queries
 SPLIT_QUERY_PATH = QUERY_FOLDER / "stock_split.txt"
