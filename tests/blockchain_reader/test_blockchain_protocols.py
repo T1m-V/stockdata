@@ -242,6 +242,32 @@ class TestBlockchainProtocols:
         assert second_value == datetime(2025, 8, 3, 15, 32, 9)
         assert aave._parse_date_value("2025-08-03") is None
 
+    def test_normalize_aave_underlying_symbol_maps_usdt_aliases(self) -> None:
+        assert aave._normalize_aave_underlying_symbol("USDâ‚®0") == "USDT"
+        assert aave._normalize_aave_underlying_symbol("USDT") == "USDT"
+        assert aave._normalize_aave_underlying_symbol("wstETH") == "wstETH"
+
+    def test_merge_disappeared_symbol_zeroes_emits_one_day_clear_markers(self) -> None:
+        result = aave._merge_disappeared_symbol_zeroes(
+            leg_columns={
+                "supply_USDC": Decimal("3"),
+                "debt_USDC": Decimal("0"),
+                "net_USDC": Decimal("3"),
+            },
+            current_symbols={"USDC"},
+            previous_active_symbols={"USDC", "WBTC", "LINK"},
+            current_state_known=True,
+        )
+
+        assert result["supply_USDC"] == Decimal("3")
+        assert result["net_USDC"] == Decimal("3")
+        assert result["supply_WBTC"] == Decimal("0")
+        assert result["debt_WBTC"] == Decimal("0")
+        assert result["net_WBTC"] == Decimal("0")
+        assert result["supply_LINK"] == Decimal("0")
+        assert result["debt_LINK"] == Decimal("0")
+        assert result["net_LINK"] == Decimal("0")
+
     def test_aave_daily_exposure_extends_past_end_until_terminal_zero_day(self) -> None:
         block_map = {
             "2026-01-01": 11,
@@ -267,6 +293,9 @@ class TestBlockchainProtocols:
             "2026-01-03 00:00:00",
         ]
         assert history[-1]["rpc_error_count"] == 0
+        assert history[-1]["supply_USDC"] == 0.0
+        assert history[-1]["debt_USDC"] == 0.0
+        assert history[-1]["net_USDC"] == 0.0
 
     def test_aave_terminal_zero_requires_zero_rpc_errors(self) -> None:
         block_map = {
@@ -292,6 +321,9 @@ class TestBlockchainProtocols:
         assert history[2]["date"] == "2026-01-03 00:00:00"
         assert history[2]["rpc_error_count"] == 1
         assert history[-1]["date"] == "2026-01-04 00:00:00"
+        assert history[-1]["supply_USDC"] == 0.0
+        assert history[-1]["debt_USDC"] == 0.0
+        assert history[-1]["net_USDC"] == 0.0
 
     def test_read_curve_pool_tokens_returns_dataclass_list_and_stops_on_revert(self) -> None:
         pool_address = "0xpool"
@@ -684,6 +716,8 @@ class TestBlockchainProtocols:
         ctx = base_ingredients.ExpansionContext(
             chain="arbitrum",
             protocol_rows={"wstETH": lst_rows},
+            symbol_protocol={"wstETH": "liquid_staking"},
+            protocol_derived_symbols={"wstETH"},
             symbol_family={},
             aave_overlay=overlay_rows,
             aave_wrapper_symbols=set(),
@@ -829,6 +863,183 @@ class TestBlockchainProtocols:
                 "unknown_symbol_material",
             }
 
+    def test_compose_base_ingredients_flags_protocol_symbols_without_family_proxy(self) -> None:
+        with TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            snapshots_root = root / "snapshots"
+            protocol_root = root / "protocol_underlying_tokens"
+            tokens_root = root / "tokens"
+            prices_root = root / "prices"
+            snapshots_root.mkdir(parents=True, exist_ok=True)
+            protocol_root.mkdir(parents=True, exist_ok=True)
+            tokens_root.mkdir(parents=True, exist_ok=True)
+            prices_root.mkdir(parents=True, exist_ok=True)
+            pd.DataFrame([{"Date": "2026-01-01", "Price": 1.0}]).to_csv(
+                prices_root / "USD_EUR.csv",
+                index=False,
+            )
+            pd.DataFrame([{"Date": "2026-01-01", "Price": 2000.0}]).to_csv(
+                prices_root / "ETH.csv",
+                index=False,
+            )
+
+            pd.DataFrame(
+                [
+                    {"Date": "2026-01-01", "Coin": "PROTO", "Quantity": 1.25},
+                ]
+            ).to_csv(snapshots_root / "arbitrum_raw_snapshots.csv", index=False)
+            with open(tokens_root / "arbitrum_tokens.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "0xproto": {"symbol": "PROTO", "family": "ETH", "protocol": "beefy"},
+                        "0xeth": {"symbol": "ETH"},
+                    },
+                    f,
+                )
+
+            with (
+                patch(
+                    "blockchain_reader.composition.base_ingredients.BLOCKCHAIN_SNAPSHOT_FOLDER",
+                    snapshots_root,
+                ),
+                patch(
+                    "blockchain_reader.composition.base_ingredients.PROTOCOL_UNDERLYING_TOKEN_FOLDER",
+                    protocol_root,
+                ),
+                patch("blockchain_reader.composition.base_ingredients.TOKENS_FOLDER", tokens_root),
+                patch("blockchain_reader.composition.base_ingredients.PRICES_FOLDER", prices_root),
+            ):
+                output_path = base_ingredients.compose_base_ingredients(chain="arbitrum")
+
+            result = pd.read_csv(output_path)
+            assert set(result["Coin"]) == {"PROTO"}
+
+            exceptions = pd.read_csv(protocol_root / "arbitrum_base_ingredients_exceptions.csv")
+            assert set(exceptions["Coin"]) == {"PROTO"}
+            assert set(exceptions["Reason"]) == {"protocol_symbol_missing_price"}
+
+    def test_compose_base_ingredients_revalues_carried_protocol_positions_daily(self) -> None:
+        with TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            snapshots_root = root / "snapshots"
+            protocol_root = root / "protocol_underlying_tokens"
+            tokens_root = root / "tokens"
+            prices_root = root / "prices"
+            (protocol_root / "beefy").mkdir(parents=True, exist_ok=True)
+            snapshots_root.mkdir(parents=True, exist_ok=True)
+            tokens_root.mkdir(parents=True, exist_ok=True)
+            prices_root.mkdir(parents=True, exist_ok=True)
+            pd.DataFrame([{"Date": "2026-01-01", "Price": 1.0}]).to_csv(
+                prices_root / "USD_EUR.csv",
+                index=False,
+            )
+
+            pd.DataFrame(
+                [
+                    {"Date": "2026-01-01", "Coin": "PROTO", "Quantity": 2.0},
+                    {"Date": "2026-01-01", "Coin": "ETH", "Quantity": 1.0},
+                    {"Date": "2026-01-02", "Coin": "ETH", "Quantity": 0.0},
+                ]
+            ).to_csv(snapshots_root / "arbitrum_raw_snapshots.csv", index=False)
+            pd.DataFrame(
+                [
+                    {"date": "2026-01-01", "asset_USDC": 1.0},
+                    {"date": "2026-01-02", "asset_USDC": 1.5},
+                ]
+            ).to_csv(protocol_root / "beefy" / "arbitrum_PROTO.csv", index=False)
+            with open(tokens_root / "arbitrum_tokens.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "0xproto": {"symbol": "PROTO", "protocol": "beefy"},
+                        "0xeth": {"symbol": "ETH"},
+                        "0xusdc": {"symbol": "USDC"},
+                    },
+                    f,
+                )
+
+            with (
+                patch(
+                    "blockchain_reader.composition.base_ingredients.BLOCKCHAIN_SNAPSHOT_FOLDER",
+                    snapshots_root,
+                ),
+                patch(
+                    "blockchain_reader.composition.base_ingredients.PROTOCOL_UNDERLYING_TOKEN_FOLDER",
+                    protocol_root,
+                ),
+                patch("blockchain_reader.composition.base_ingredients.TOKENS_FOLDER", tokens_root),
+                patch("blockchain_reader.composition.base_ingredients.PRICES_FOLDER", prices_root),
+            ):
+                output_path = base_ingredients.compose_base_ingredients(chain="arbitrum")
+
+            result = pd.read_csv(output_path).sort_values(["Date", "Coin"]).reset_index(drop=True)
+            assert result.to_dict("records") == [
+                {"Date": "2026-01-01 00:00:00", "Coin": "ETH", "Quantity": 1.0},
+                {"Date": "2026-01-01 00:00:00", "Coin": "USDC", "Quantity": 2.0},
+                {"Date": "2026-01-02 00:00:00", "Coin": "USDC", "Quantity": 3.0},
+            ]
+
+    def test_compose_base_ingredients_revalues_aave_overlay_daily_without_wrapper_snapshots(
+        self,
+    ) -> None:
+        with TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            snapshots_root = root / "snapshots"
+            protocol_root = root / "protocol_underlying_tokens"
+            tokens_root = root / "tokens"
+            prices_root = root / "prices"
+            snapshots_root.mkdir(parents=True, exist_ok=True)
+            (protocol_root / "aave").mkdir(parents=True, exist_ok=True)
+            tokens_root.mkdir(parents=True, exist_ok=True)
+            prices_root.mkdir(parents=True, exist_ok=True)
+            pd.DataFrame([{"Date": "2026-01-01", "Price": 1.0}]).to_csv(
+                prices_root / "USD_EUR.csv",
+                index=False,
+            )
+
+            pd.DataFrame(
+                [
+                    {"Date": "2026-01-01", "Coin": "aArbUSDC", "Quantity": 5.0},
+                    {"Date": "2026-01-01", "Coin": "ETH", "Quantity": 1.0},
+                    {"Date": "2026-01-02", "Coin": "ETH", "Quantity": 0.0},
+                ]
+            ).to_csv(snapshots_root / "arbitrum_raw_snapshots.csv", index=False)
+            pd.DataFrame(
+                [
+                    {"date": "2026-01-01", "net_USDC": 2.5},
+                    {"date": "2026-01-02", "net_USDC": 3.0},
+                ]
+            ).to_csv(protocol_root / "aave" / "arbitrum_aave_daily_exposure.csv", index=False)
+            with open(tokens_root / "arbitrum_tokens.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "0xaave": {"symbol": "aArbUSDC", "family": "USDC", "protocol": "aave"},
+                        "0xusdc": {"symbol": "USDC"},
+                        "0xeth": {"symbol": "ETH"},
+                    },
+                    f,
+                )
+
+            with (
+                patch(
+                    "blockchain_reader.composition.base_ingredients.BLOCKCHAIN_SNAPSHOT_FOLDER",
+                    snapshots_root,
+                ),
+                patch(
+                    "blockchain_reader.composition.base_ingredients.PROTOCOL_UNDERLYING_TOKEN_FOLDER",
+                    protocol_root,
+                ),
+                patch("blockchain_reader.composition.base_ingredients.TOKENS_FOLDER", tokens_root),
+                patch("blockchain_reader.composition.base_ingredients.PRICES_FOLDER", prices_root),
+            ):
+                output_path = base_ingredients.compose_base_ingredients(chain="arbitrum")
+
+            result = pd.read_csv(output_path).sort_values(["Date", "Coin"]).reset_index(drop=True)
+            assert result.to_dict("records") == [
+                {"Date": "2026-01-01 00:00:00", "Coin": "ETH", "Quantity": 1.0},
+                {"Date": "2026-01-01 00:00:00", "Coin": "USDC", "Quantity": 2.5},
+                {"Date": "2026-01-02 00:00:00", "Coin": "USDC", "Quantity": 3.0},
+            ]
+
     def test_run_protocol_pipeline_includes_liquid_staking_by_default(self) -> None:
         with (
             patch("blockchain_reader.pipeline.process_all_beefy_tokens") as beefy_mock,
@@ -882,9 +1093,11 @@ class TestBlockchainProtocols:
             root = Path(tmp_dir)
             protocol_root = root / "protocol_underlying_tokens"
             prices_root = root / "prices"
+            lp_prices_root = prices_root / "lp_prices" / "arbitrum"
             tokens_root = root / "tokens"
             (protocol_root / "balancer").mkdir(parents=True, exist_ok=True)
             prices_root.mkdir(parents=True, exist_ok=True)
+            lp_prices_root.mkdir(parents=True, exist_ok=True)
             tokens_root.mkdir(parents=True, exist_ok=True)
 
             pd.DataFrame(
@@ -907,7 +1120,7 @@ class TestBlockchainProtocols:
                 ]
             ).to_csv(prices_root / "BTC.csv", index=False)
             pd.DataFrame([{"Date": "2024-01-04", "Price": 100}]).to_csv(
-                prices_root / "LP.csv",
+                lp_prices_root / "LP.csv",
                 index=False,
             )
 
@@ -924,8 +1137,8 @@ class TestBlockchainProtocols:
             ):
                 updated = lp_pricing.generate_protocol_lp_price_files(chain="arbitrum")
 
-            assert updated == [prices_root / "LP.csv"]
-            result = pd.read_csv(prices_root / "LP.csv")
+            assert updated == [lp_prices_root / "LP.csv"]
+            result = pd.read_csv(lp_prices_root / "LP.csv")
             assert list(result.columns) == ["Date", "Price"]
             assert list(result["Date"]) == ["2024-01-04", "2024-01-03", "2024-01-02"]
             assert result.loc[result["Date"] == "2024-01-03", "Price"].iloc[0] == 12000.0
@@ -937,10 +1150,12 @@ class TestBlockchainProtocols:
             root = Path(tmp_dir)
             protocol_root = root / "protocol_underlying_tokens"
             prices_root = root / "prices"
+            lp_prices_root = prices_root / "lp_prices" / "arbitrum"
             tokens_root = root / "tokens"
             (protocol_root / "balancer").mkdir(parents=True, exist_ok=True)
             (protocol_root / "beefy").mkdir(parents=True, exist_ok=True)
             prices_root.mkdir(parents=True, exist_ok=True)
+            lp_prices_root.mkdir(parents=True, exist_ok=True)
             tokens_root.mkdir(parents=True, exist_ok=True)
 
             pd.DataFrame([{"date": "2024-01-02", "asset_ETH": 2.0}]).to_csv(
@@ -969,9 +1184,9 @@ class TestBlockchainProtocols:
             ):
                 updated = lp_pricing.generate_protocol_lp_price_files(chain="arbitrum")
 
-            assert set(updated) == {prices_root / "LP.csv", prices_root / "MOO.csv"}
-            lp_frame = pd.read_csv(prices_root / "LP.csv")
-            moo_frame = pd.read_csv(prices_root / "MOO.csv")
+            assert set(updated) == {lp_prices_root / "LP.csv", lp_prices_root / "MOO.csv"}
+            lp_frame = pd.read_csv(lp_prices_root / "LP.csv")
+            moo_frame = pd.read_csv(lp_prices_root / "MOO.csv")
             assert lp_frame.loc[0, "Price"] == 4000.0
             assert moo_frame.loc[0, "Price"] == 6000.0
 
@@ -980,9 +1195,11 @@ class TestBlockchainProtocols:
             root = Path(tmp_dir)
             protocol_root = root / "protocol_underlying_tokens"
             prices_root = root / "prices"
+            lp_prices_root = prices_root / "lp_prices" / "arbitrum"
             tokens_root = root / "tokens"
             (protocol_root / "curve").mkdir(parents=True, exist_ok=True)
             prices_root.mkdir(parents=True, exist_ok=True)
+            lp_prices_root.mkdir(parents=True, exist_ok=True)
             tokens_root.mkdir(parents=True, exist_ok=True)
 
             pd.DataFrame([{"date": "2024-01-02", "asset_UNKNOWN": 1.0}]).to_csv(
@@ -1003,17 +1220,19 @@ class TestBlockchainProtocols:
                 updated = lp_pricing.generate_protocol_lp_price_files(chain="arbitrum")
 
             assert updated == []
-            assert not (prices_root / "BAD.csv").exists()
+            assert not (lp_prices_root / "BAD.csv").exists()
 
     def test_generate_protocol_lp_price_files_excludes_aave_inputs(self) -> None:
         with TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             protocol_root = root / "protocol_underlying_tokens"
             prices_root = root / "prices"
+            lp_prices_root = prices_root / "lp_prices" / "arbitrum"
             tokens_root = root / "tokens"
             (protocol_root / "aave").mkdir(parents=True, exist_ok=True)
             (protocol_root / "balancer").mkdir(parents=True, exist_ok=True)
             prices_root.mkdir(parents=True, exist_ok=True)
+            lp_prices_root.mkdir(parents=True, exist_ok=True)
             tokens_root.mkdir(parents=True, exist_ok=True)
 
             pd.DataFrame([{"date": "2024-01-02", "asset_ETH": 9.0}]).to_csv(
@@ -1041,6 +1260,106 @@ class TestBlockchainProtocols:
             ):
                 updated = lp_pricing.generate_protocol_lp_price_files(chain="arbitrum")
 
-            assert updated == [prices_root / "LP.csv"]
-            assert (prices_root / "LP.csv").exists()
-            assert not (prices_root / "AAVEWRAP.csv").exists()
+            assert updated == [lp_prices_root / "LP.csv"]
+            assert (lp_prices_root / "LP.csv").exists()
+            assert not (lp_prices_root / "AAVEWRAP.csv").exists()
+
+    def test_generate_protocol_lp_price_files_prefers_protocol_rows_over_family_proxy(self) -> None:
+        with TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            protocol_root = root / "protocol_underlying_tokens"
+            prices_root = root / "prices"
+            lp_prices_root = prices_root / "lp_prices" / "arbitrum"
+            tokens_root = root / "tokens"
+            (protocol_root / "beefy").mkdir(parents=True, exist_ok=True)
+            prices_root.mkdir(parents=True, exist_ok=True)
+            lp_prices_root.mkdir(parents=True, exist_ok=True)
+            tokens_root.mkdir(parents=True, exist_ok=True)
+
+            pd.DataFrame([{"date": "2024-01-02", "asset_BTC": 1.0}]).to_csv(
+                protocol_root / "beefy" / "arbitrum_WRAP.csv",
+                index=False,
+            )
+            pd.DataFrame([{"Date": "2024-01-02", "Price": 2000.0}]).to_csv(
+                prices_root / "ETH.csv",
+                index=False,
+            )
+            pd.DataFrame([{"Date": "2024-01-02", "Price": 40000.0}]).to_csv(
+                prices_root / "BTC.csv",
+                index=False,
+            )
+            with open(tokens_root / "arbitrum_tokens.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "0xwrap": {"symbol": "WRAP", "family": "ETH", "protocol": "beefy"},
+                    },
+                    f,
+                )
+
+            with (
+                patch(
+                    "blockchain_reader.composition.lp_pricing.PROTOCOL_UNDERLYING_TOKEN_FOLDER",
+                    protocol_root,
+                ),
+                patch("blockchain_reader.composition.lp_pricing.PRICES_FOLDER", prices_root),
+                patch("blockchain_reader.composition.lp_pricing.TOKENS_FOLDER", tokens_root),
+            ):
+                updated = lp_pricing.generate_protocol_lp_price_files(chain="arbitrum")
+
+            assert updated == [lp_prices_root / "WRAP.csv"]
+            frame = pd.read_csv(lp_prices_root / "WRAP.csv")
+            assert frame.loc[0, "Price"] == 40000.0
+
+    def test_generate_protocol_lp_price_files_values_wsteth_from_liquid_staking_ratio(self) -> None:
+        with TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            protocol_root = root / "protocol_underlying_tokens"
+            prices_root = root / "prices"
+            lp_prices_root = prices_root / "lp_prices" / "arbitrum"
+            tokens_root = root / "tokens"
+            (protocol_root / "liquid_staking").mkdir(parents=True, exist_ok=True)
+            (protocol_root / "beefy").mkdir(parents=True, exist_ok=True)
+            prices_root.mkdir(parents=True, exist_ok=True)
+            lp_prices_root.mkdir(parents=True, exist_ok=True)
+            tokens_root.mkdir(parents=True, exist_ok=True)
+
+            pd.DataFrame([{"date": "2024-01-02", "asset_ETH": 1.1}]).to_csv(
+                protocol_root / "liquid_staking" / "arbitrum_wstETH.csv",
+                index=False,
+            )
+            pd.DataFrame([{"date": "2024-01-02", "asset_wstETH": 2.0}]).to_csv(
+                protocol_root / "beefy" / "arbitrum_WRAP.csv",
+                index=False,
+            )
+            pd.DataFrame([{"Date": "2024-01-02", "Price": 2000.0}]).to_csv(
+                prices_root / "ETH.csv",
+                index=False,
+            )
+            with open(tokens_root / "arbitrum_tokens.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "0xwsteth": {
+                            "symbol": "wstETH",
+                            "family": "ETH",
+                            "protocol": "liquid_staking",
+                        },
+                        "0xwrap": {"symbol": "WRAP", "family": "ETH", "protocol": "beefy"},
+                    },
+                    f,
+                )
+
+            with (
+                patch(
+                    "blockchain_reader.composition.lp_pricing.PROTOCOL_UNDERLYING_TOKEN_FOLDER",
+                    protocol_root,
+                ),
+                patch("blockchain_reader.composition.lp_pricing.PRICES_FOLDER", prices_root),
+                patch("blockchain_reader.composition.lp_pricing.TOKENS_FOLDER", tokens_root),
+            ):
+                updated = lp_pricing.generate_protocol_lp_price_files(chain="arbitrum")
+
+            assert set(updated) == {lp_prices_root / "wstETH.csv", lp_prices_root / "WRAP.csv"}
+            wsteth_frame = pd.read_csv(lp_prices_root / "wstETH.csv")
+            wrap_frame = pd.read_csv(lp_prices_root / "WRAP.csv")
+            assert wsteth_frame.loc[0, "Price"] == 2200.0
+            assert wrap_frame.loc[0, "Price"] == 4400.0

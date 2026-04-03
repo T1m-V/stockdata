@@ -14,13 +14,12 @@ def fetch_history_single_stock_yahoo(isin: str, ticker: str, days_back: int) -> 
         days_back: Days of history requested.
 
     Returns:
-        Pandas Dataframe with schema: Date, ISIN, Price, Name
+        Pandas Dataframe with schema: Date, Price
     """
-    print(f"🚀 Fetching Yahoo history for {isin} ({ticker})...")
+    print(f"[yahoo] Fetching history for {isin} ({ticker})...")
 
     try:
         ticker_obj = yf.Ticker(ticker)
-        # Fetching until current time
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days_back)
 
@@ -32,21 +31,19 @@ def fetch_history_single_stock_yahoo(isin: str, ticker: str, days_back: int) -> 
         )
 
         if hist.empty:
-            print(f"⚠️ No data found for {ticker}")
+            print(f"[yahoo] No data found for {ticker}")
             return None
 
-        # Clean up the dataframe to streamlined schema
-        hist = hist[["Close"]].reset_index()
-        hist["Date"] = hist["Date"].dt.tz_localize(None).dt.date
-        hist = hist.rename(columns={"Close": "Price"})
-        df = hist[["Date", "Price"]].copy()
+        frame = hist[["Close"]].reset_index()
+        frame["Date"] = frame["Date"].dt.tz_localize(None).dt.date
+        frame = frame.rename(columns={"Close": "Price"})
+        frame = frame[["Date", "Price"]].copy()
 
-        # Currency logging for user info (internal check)
         currency = ticker_obj.fast_info.get("currency", "Unknown")
-        print(f"-> {isin} | Currency: {currency} | Rows: {len(df)}")
+        print(f"[yahoo] {isin} | Currency: {currency} | Rows: {len(frame)}")
 
-        return df.sort_values("Date", ascending=False)
+        return frame.sort_values("Date", ascending=False)
 
     except Exception as e:
-        print(f"❌ Error fetching {isin} via Yahoo: {e}")
+        print(f"[yahoo] Error fetching {isin} via Yahoo: {e}")
         return None

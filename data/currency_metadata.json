@@ -3,57 +3,118 @@
     "ticker": "BTC-USD",
     "name": "Bitcoin",
     "currency": "USD",
-    "waterfall": ["Yahoo"],
+    "waterfall": [
+      "Yahoo"
+    ],
     "group": "Cryptocurrencies"
   },
   "ETH": {
     "ticker": "ETH-USD",
     "name": "Ethereum",
     "currency": "USD",
-    "waterfall": ["Yahoo"],
+    "waterfall": [
+      "Yahoo"
+    ],
     "group": "Cryptocurrencies"
   },
   "NEXO": {
     "ticker": "NEXO-USD",
     "name": "Nexo",
     "currency": "USD",
-    "waterfall": ["Yahoo"],
+    "waterfall": [
+      "Yahoo"
+    ],
     "group": "Cryptocurrencies"
   },
   "CRO": {
     "ticker": "CRO-USD",
     "name": "Cronos",
     "currency": "USD",
-    "waterfall": ["Yahoo"],
+    "waterfall": [
+      "Yahoo"
+    ],
+    "group": "Cryptocurrencies"
+  },
+  "ARB": {
+    "ticker": "ARB11841-USD",
+    "name": "Arbitrum",
+    "currency": "USD",
+    "waterfall": [
+      "Yahoo"
+    ],
+    "group": "Cryptocurrencies"
+  },
+  "LINK": {
+    "ticker": "LINK-USD",
+    "name": "Chainlink",
+    "currency": "USD",
+    "waterfall": [
+      "Yahoo"
+    ],
     "group": "Cryptocurrencies"
   },
   "USD_EUR": {
     "ticker": "USDEUR=X",
     "name": "US Dollar / Euro",
     "currency": "EUR",
-    "waterfall": ["Yahoo"],
+    "waterfall": [
+      "Yahoo"
+    ],
     "group": "Cash"
   },
   "GM-BTC": {
     "ticker": "arbitrum:0x47c031236e19d024b42f8AE6780E44A573170703",
     "name": "GMX BTC/USD",
     "currency": "USD",
-    "waterfall": ["Llama"],
+    "waterfall": [
+      "Llama"
+    ],
     "group": "Liquidity Pools"
   },
   "GM-ETH": {
     "ticker": "arbitrum:0x70d95587d40a2caf56bd97485ab3eec10bee6336",
     "name": "GMX ETH/USD",
     "currency": "USD",
-    "waterfall": ["Llama"],
+    "waterfall": [
+      "Llama"
+    ],
     "group": "Liquidity Pools"
   },
   "GLP": {
     "ticker": "arbitrum:0x4277f8F2c384827B5273592FF7CeBd9f2C1ac258",
     "name": "GLP",
     "currency": "USD",
-    "waterfall": ["Llama"],
+    "waterfall": [
+      "Llama"
+    ],
     "group": "Liquidity Pools",
     "active": false
+  },
+  "GM-LINK": {
+    "ticker": "arbitrum:0x7f1fa204bb700853d36994da19f830b6ad18455c",
+    "name": "GMX LINK/USD",
+    "currency": "USD",
+    "waterfall": [
+      "Llama"
+    ],
+    "group": "Liquidity Pools"
+  },
+  "GM-ARB": {
+    "ticker": "arbitrum:0xc25cef6061cf5de5eb761b50e4743c1f5d7e5407",
+    "name": "GMX ARB/USD",
+    "currency": "USD",
+    "waterfall": [
+      "Llama"
+    ],
+    "group": "Liquidity Pools"
+  },
+  "GM-USD": {
+    "ticker": "arbitrum:0xb686bcb112660343e6d15bdb65297e110c8311c4",
+    "name": "GMX USD/USD",
+    "currency": "USD",
+    "waterfall": [
+      "Llama"
+    ],
+    "group": "Liquidity Pools"
   }
 }
