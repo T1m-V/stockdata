@@ -37,24 +37,33 @@ PAYLOAD = {
 }
 
 
+def _extract_transactions(data: dict) -> list[dict]:
+    errors = data.get("errors")
+    if errors:
+        messages = ", ".join(error.get("message", "Unknown GraphQL error") for error in errors)
+        raise RuntimeError(f"getquin API returned GraphQL errors: {messages}")
+
+    transactions = data.get("data", {}).get("transactions")
+    if not isinstance(transactions, dict) or not isinstance(transactions.get("results"), list):
+        raise RuntimeError("getquin API response did not include transaction results.")
+
+    return transactions["results"]
+
+
 def download_transactions(output_file: Path) -> None:
-    try:
-        print("Sending request to getquin API...")
-        response = requests.post(GETQUIN_URL, headers=HEADERS, json=PAYLOAD)
-        response.raise_for_status()
+    print("Sending request to getquin API...")
+    response = requests.post(GETQUIN_URL, headers=HEADERS, json=PAYLOAD)
+    response.raise_for_status()
 
-        data = response.json()
+    data = response.json()
+    transactions = _extract_transactions(data=data)
 
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
 
-        transactions = len(data["data"]["transactions"]["results"])
-
-        print(f"Successfully downloaded {transactions} transactions.")
-        print(f"Data saved to {output_file}")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    print(f"Successfully downloaded {len(transactions)} transactions.")
+    print(f"Data saved to {output_file}")
 
 
 if __name__ == "__main__":
