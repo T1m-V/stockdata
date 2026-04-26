@@ -1,0 +1,129 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Dashboard: frontend install",
+      "type": "shell",
+      "command": "npm.cmd",
+      "args": ["install"],
+      "options": {
+        "cwd": "${workspaceFolder}/src/dashboard/frontend"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Dashboard: frontend build",
+      "type": "shell",
+      "command": "npm.cmd",
+      "args": ["run", "build"],
+      "dependsOrder": "sequence",
+      "dependsOn": ["Dashboard: frontend install"],
+      "options": {
+        "cwd": "${workspaceFolder}/src/dashboard/frontend"
+      },
+      "problemMatcher": ["$tsc"],
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Dashboard: backend",
+      "type": "shell",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$existing = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue; if ($existing) { Write-Host 'Uvicorn running on http://127.0.0.1:8000'; exit 0 }; uv run uvicorn dashboard.main:app --host 127.0.0.1 --port 8000 --reload"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "uvicorn",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Started server process|Waiting for application startup",
+          "endsPattern": "Uvicorn running on http://127\\.0\\.0\\.1:8000"
+        }
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Dashboard: frontend dev",
+      "type": "shell",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$existing = Get-NetTCPConnection -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue; if ($existing) { Write-Host 'Local: http://127.0.0.1:5173/'; exit 0 }; npm.cmd run dev -- --port 5173 --strictPort"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/src/dashboard/frontend"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE|npm run dev",
+          "endsPattern": "127\\.0\\.0\\.1:5173"
+        }
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Dashboard: open browser",
+      "type": "shell",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "Start-Process 'http://127.0.0.1:5173/?realData=1'"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "reveal": "never"
+      }
+    },
+    {
+      "label": "Dashboard: build and launch servers",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Dashboard: frontend build",
+        "Dashboard: backend",
+        "Dashboard: frontend dev",
+        "Dashboard: open browser"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

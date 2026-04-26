@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Dashboard (:5173)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "echo Dashboard is running at http://127.0.0.1:5173/?realData=1",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Dashboard: build and launch servers"
+    }
+  ]
+}

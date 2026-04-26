@@ -9,6 +9,11 @@ STYLEGUIDE.md
 AGENTS.md
 checklist.md
 
+# Frontend artifacts
+node_modules/
+dist/
+*.log
+
 # Data folders
 data/transactions
 data/blockchain

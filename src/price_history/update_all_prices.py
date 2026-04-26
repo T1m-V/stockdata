@@ -73,9 +73,10 @@ def _can_use_ft(last_date: datetime | None, now: datetime) -> bool:
 def _fetch_from_source(
     source: str,
     identifier: str,
-    ticker: str | None,
+    asset_config: dict[str, Any],
     days_back: int,
 ) -> pd.DataFrame:
+    ticker = asset_config.get("ticker")
     if source == "Yahoo":
         if not ticker:
             return pd.DataFrame(columns=["Date", "Price"])
@@ -87,7 +88,11 @@ def _fetch_from_source(
         return fetch_history_defillama(ticker=ticker, days_back=days_back)
 
     if source == "FT":
-        return fetch_history_single_stock_ft(isin=identifier)
+        return fetch_history_single_stock_ft(
+            isin=identifier,
+            ft_symbol=asset_config.get("ft_symbol"),
+            ft_asset_type=asset_config.get("ft_asset_type", "funds"),
+        )
 
     if source == "Morningstar":
         return fetch_history_single_stock_morningstar(isin=identifier, days_back=days_back)
@@ -95,10 +100,16 @@ def _fetch_from_source(
     return pd.DataFrame(columns=["Date", "Price"])
 
 
-def _save_and_merge(identifier: str, incoming: pd.DataFrame) -> int:
+def _save_and_merge(
+    identifier: str,
+    incoming: pd.DataFrame,
+    history_start: str | None = None,
+) -> int:
     file_path = _price_file_path(identifier=identifier)
     existing = load_price_csv(file_path=file_path)
     merged = merge_price_frames(existing=existing, incoming=incoming)
+    if history_start:
+        merged = merged[pd.to_datetime(merged["Date"]) >= pd.Timestamp(history_start)]
     merged.to_csv(file_path, index=False)
     return len(merged)
 
@@ -135,7 +146,6 @@ def update_single_asset(
         )
 
     waterfall: list[str] = asset_config.get("waterfall", [])
-    ticker = asset_config.get("ticker")
     if not waterfall:
         return AssetUpdateResult(
             identifier=identifier,
@@ -158,7 +168,7 @@ def update_single_asset(
             fetched = _fetch_from_source(
                 source=source,
                 identifier=identifier,
-                ticker=ticker,
+                asset_config=asset_config,
                 days_back=HISTORY_DAYS,
             )
         except Exception as exc:
@@ -170,7 +180,11 @@ def update_single_asset(
             print(f"[{identifier}] source={source} returned no usable data")
             continue
 
-        rows_written = _save_and_merge(identifier=identifier, incoming=normalized)
+        rows_written = _save_and_merge(
+            identifier=identifier,
+            incoming=normalized,
+            history_start=asset_config.get("history_start"),
+        )
         if _should_sleep_after_source(source=source):
             time.sleep(random.uniform(*SLEEP_RANGE_SECONDS))
 

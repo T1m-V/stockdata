@@ -17,6 +17,18 @@
     "group": "Funds/ETFs",
     "provider": "Amundi"
   },
+  "IE000OHXGWO8": {
+    "ticker": "RGSC.DU",
+    "ft_symbol": "RGSC:GER:EUR",
+    "ft_asset_type": "etfs",
+    "name": "Robeco NextGen Global Small-Cap Equity UCITS ETF Acc",
+    "currency": "EUR",
+    "waterfall": ["FT", "Yahoo"],
+    "history_start": "2026-04-13",
+    "region": "DEVELOPED",
+    "group": "Funds/ETFs",
+    "provider": "Robeco"
+  },
   "NL0011225305": {
     "ticker": "0P000160R2.F",
     "name": "Northern Trust Wld",

@@ -43,7 +43,11 @@ def _get_with_retries(
     return None
 
 
-def fetch_history_single_stock_ft(isin: str) -> pd.DataFrame | None:
+def fetch_history_single_stock_ft(
+    isin: str,
+    ft_symbol: str | None = None,
+    ft_asset_type: str = "funds",
+) -> pd.DataFrame | None:
     """
     Scrapes historical data from FT.com.
 
@@ -55,7 +59,8 @@ def fetch_history_single_stock_ft(isin: str) -> pd.DataFrame | None:
     """
     print(f"Fetching FT history for {isin}...")
 
-    url = f"https://markets.ft.com/data/funds/tearsheet/historical?s={isin}:EUR"
+    symbol = ft_symbol or f"{isin}:EUR"
+    url = f"https://markets.ft.com/data/{ft_asset_type}/tearsheet/historical?s={symbol}"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"

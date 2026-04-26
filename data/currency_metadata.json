@@ -200,7 +200,7 @@
     "waterfall": [
       "Yahoo"
     ],
-    "group": "Cryptocurrencies"
-  },
-  "active": false
+    "group": "Cryptocurrencies",
+    "active": false
+  }
 }

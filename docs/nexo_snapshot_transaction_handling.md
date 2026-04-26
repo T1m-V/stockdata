@@ -6,7 +6,7 @@ This document specifies how `src/blockchain_reader/cex/nexo_snapshots.py` proces
 - Output: `data/blockchain/snapshots/cex/nexo/nexo_raw_snapshots.csv`
 - Repayment review output: `data/blockchain/snapshots/cex/nexo/nexo_liquidation_only_review.csv`
 
-The behavior below reflects the intended handling for the current ledger shape (32 unique `Type` values), documented on 2026-04-03.
+The behavior below reflects the intended handling for the current supported NEXO `Type` values, documented on 2026-04-03.
 
 ## 1. Global processing flow
 
@@ -209,44 +209,42 @@ Current card applications:
 - approved `nexo card refund`: debt-token principal is overridden using the EUR notional.
 - approved `nexo card cashback reversal`: debt-token principal is overridden and an additional principal increment is applied to `NEXO` without quantity increase.
 
-## 4. Exact per-`Type` handling in current NEXO ledger
+## 4. Exact per-`Type` handling
 
-The counts below are exact for the current NEXO transaction folder.
-
-| Type (exact text) | Rows | Exact handling path(s) |
-|---|---:|---|
-| Assimilation | 107 | `receive:positive_input_credit` |
-| Bonus | 1 | `receive:positive_input_credit` |
-| Cashback | 906 | `reward:cashback_50_50` (all rows) |
-| Credit Card Fiatx Exchange To Withdraw | 13 | `send:withdrawal_rule` |
-| Credit Card Withdrawal Credit | 498 | `skip:card_rule` |
-| Deposit Over Repayment | 18 | `send:over_repayment_return_rule` |
-| Deposit To Exchange | 72 | `skip:explicit_rule` |
-| Dividend | 1 | `receive:positive_input_credit` |
-| Exchange | 146 | `swap:input_output_exchange` |
-| Exchange Cashback | 122 | `reward:exchange_cashback_free` |
-| Exchange Credit | 996 | `skip:card_loan_withdrawal_rule` |
-| Exchange Deposited On | 72 | `receive:deposit_credit_rule` (all rows; quantity sourced from absolute EUR input amount) |
-| Exchange Liquidation | 210 | `skip:repayment_unification_phase` (unmatched rows exported to review CSV) |
-| Exchange To Withdraw | 15 | `send:withdrawal_rule` |
-| Fixed Term Interest | 116 | `reward:interest_75_25` (all rows) |
-| Interest | 5943 | `reward:interest_75_25` (5487), `send:negative_stable_interest` (305), `skip:empty_interest_row` (151) |
-| Interest Additional | 2 | `send:negative_stable_interest` |
-| Loan Withdrawal | 3 | `send:loan_withdrawal_debt_only` |
-| Locking Term Deposit | 121 | `skip:ignore_term_deposit_type` |
-| Manual Repayment | 432 | `pair:synthetic_swap_when_matched`, else `skip` |
-| Manual Sell Order | 432 | `pair:synthetic_swap_when_matched`, else `skip` |
-| Nexo Card Cashback Reversal | 14 | `send:cashback_reversal_rule` (7 approved debt-mode), `skip:eur_refund_redeposit_rule` (4 approved EUR-mode bundles), `skip:rejected_rule` (3 rejected) |
-| Nexo Card Purchase | 944 | `send:card_purchase_rule` (907 approved credit-mode), `skip:debit_mode_companion_rule` (13 approved debit-mode), `skip:rejected_rule` (24 rejected) |
-| Nexo Card Refund | 20 | `receive:card_refund_rule` (10 approved debt-mode), `skip:eur_mode_refund_rule` (4 approved EUR-mode), `skip:rejected_rule` (6 rejected) |
-| Nexo Card Transaction Fee | 8 | `send:card_fee_rule` |
-| Referral Bonus | 4 | `receive:positive_input_credit` |
-| Top up Crypto | 78 | `receive:positive_input_credit` |
-| Transfer In | 251 | `skip:ignore_internal_wallet_transfer` |
-| Transfer Out | 1013 | `skip:ignore_internal_wallet_transfer` |
-| Unlocking Term Deposit | 116 | `skip:ignore_term_deposit_type` |
-| Withdraw Exchanged | 28 | `skip:withdrawal_settlement_rule` |
-| Withdrawal | 38 | `send:withdrawal_special_case` |
+| Type (exact text) | Exact handling path(s) |
+|---|---|
+| Assimilation | `receive:positive_input_credit` |
+| Bonus | `reward:free_input_reward` |
+| Cashback | `reward:cashback_50_50` |
+| Credit Card Fiatx Exchange To Withdraw | `send:withdrawal_rule` |
+| Credit Card Withdrawal Credit | `skip:card_rule` |
+| Deposit Over Repayment | `send:over_repayment_return_rule` |
+| Deposit To Exchange | `skip:explicit_rule` |
+| Dividend | `reward:free_input_reward` |
+| Exchange | `swap:input_output_exchange` |
+| Exchange Cashback | `reward:exchange_cashback_free` |
+| Exchange Credit | `skip:card_loan_withdrawal_rule` |
+| Exchange Deposited On | `receive:deposit_credit_rule` (quantity sourced from absolute EUR input amount) |
+| Exchange Liquidation | `skip:repayment_unification_phase` (unmatched rows exported to review CSV) |
+| Exchange To Withdraw | `send:withdrawal_rule` |
+| Fixed Term Interest | `reward:interest_75_25` |
+| Interest | `reward:interest_75_25`, `send:negative_stable_interest`, or `skip:empty_interest_row` |
+| Interest Additional | `send:negative_stable_interest` |
+| Loan Withdrawal | `send:loan_withdrawal_debt_only` |
+| Locking Term Deposit | `skip:ignore_term_deposit_type` |
+| Manual Repayment | `pair:synthetic_swap_when_matched`, else `skip` |
+| Manual Sell Order | `pair:synthetic_swap_when_matched`, else `skip` |
+| Nexo Card Cashback Reversal | `send:cashback_reversal_rule`, `skip:eur_refund_redeposit_rule`, or `skip:rejected_rule` |
+| Nexo Card Purchase | `send:card_purchase_rule`, `skip:debit_mode_companion_rule`, or `skip:rejected_rule` |
+| Nexo Card Refund | `receive:card_refund_rule`, `skip:eur_mode_refund_rule`, or `skip:rejected_rule` |
+| Nexo Card Transaction Fee | `send:card_fee_rule` |
+| Referral Bonus | `reward:free_input_reward` |
+| Top up Crypto | `receive:positive_input_credit` |
+| Transfer In | `skip:ignore_internal_wallet_transfer` |
+| Transfer Out | `skip:ignore_internal_wallet_transfer` |
+| Unlocking Term Deposit | `skip:ignore_term_deposit_type` |
+| Withdraw Exchanged | `skip:withdrawal_settlement_rule` |
+| Withdrawal | `send:withdrawal_special_case` |
 
 ## 5. Important exact edge behaviors
 
