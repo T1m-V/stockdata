@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Dashboard (:5173)",
+      "type": "pwa-msedge",
+      "request": "launch",
+      "url": "http://127.0.0.1:5173/?realData=1",
+      "webRoot": "${workspaceFolder}/src/dashboard/frontend",
+      "preLaunchTask": "Dashboard: build and launch servers"
+    }
+  ]
+}
