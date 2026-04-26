@@ -17,6 +17,11 @@ class _Response:
         return self._data
 
 
+@pytest.fixture(autouse=True)
+def _token(monkeypatch) -> None:
+    monkeypatch.setattr(get_getquin_transactions, "get_token", lambda: "test-token")
+
+
 def test_download_transactions_rejects_graphql_errors(monkeypatch, tmp_path: Path) -> None:
     output_file = tmp_path / "transactions_export.json"
 

@@ -7,22 +7,25 @@ from file_paths import GETQUIN_URL, TRANSACTION_JSON_PATH, TRANSACTION_QUERY_PAT
 
 MAX_TRANSACTIONS = 500
 
-HEADERS = {
-    "accept": "*/*",
-    "accept-language": "en",
-    "apollographql-client-name": "web",
-    "apollographql-client-version": "2.213.2",
-    "authorization": get_token(),
-    "content-type": "application/json",
-    "priority": "u=1, i",
-    "sec-ch-ua": '"Microsoft Edge";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-site",
-    "referrer": "https://app.getquin.com/",
-}
+
+def _headers() -> dict[str, str]:
+    return {
+        "accept": "*/*",
+        "accept-language": "en",
+        "apollographql-client-name": "web",
+        "apollographql-client-version": "2.213.2",
+        "authorization": get_token(),
+        "content-type": "application/json",
+        "priority": "u=1, i",
+        "sec-ch-ua": '"Microsoft Edge";v="143", "Chromium";v="143", "Not A(Brand";v="24"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-site",
+        "referrer": "https://app.getquin.com/",
+    }
+
 
 # The GraphQL query and variables
 PAYLOAD = {
@@ -52,7 +55,7 @@ def _extract_transactions(data: dict) -> list[dict]:
 
 def download_transactions(output_file: Path) -> None:
     print("Sending request to getquin API...")
-    response = requests.post(GETQUIN_URL, headers=HEADERS, json=PAYLOAD)
+    response = requests.post(GETQUIN_URL, headers=_headers(), json=PAYLOAD)
     response.raise_for_status()
 
     data = response.json()
