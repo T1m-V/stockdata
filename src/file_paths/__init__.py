@@ -61,7 +61,7 @@ def _resolve_data_folder(
     environ: Mapping[str, str] | None = None,
     git_common_dir: Path | None = None,
 ) -> Path:
-    env = environ or os.environ
+    env = os.environ if environ is None else environ
     override = env.get("STOCKDATA_DATA_DIR")
     if override:
         data_folder = Path(override).expanduser()
