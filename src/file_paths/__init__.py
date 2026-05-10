@@ -1,6 +1,8 @@
 import json
 import os
+import subprocess
 from pathlib import Path
+from typing import Mapping
 
 
 def get_token():
@@ -17,7 +19,71 @@ GETQUIN_URL = "https://api-gql-v2.getquin.com/"
 
 # Main paths
 BASE_FOLDER = Path(__file__).parents[2]
-DATA_FOLDER = BASE_FOLDER / "data"
+
+PRIVATE_DATA_FOLDERS = ("transactions", "real_estate", "blockchain")
+
+
+def _has_private_dashboard_data(data_folder: Path) -> bool:
+    return all((data_folder / folder).exists() for folder in PRIVATE_DATA_FOLDERS)
+
+
+def _git_common_data_folder(base_folder: Path, git_common_dir: Path | None = None) -> Path | None:
+    if git_common_dir is None:
+        try:
+            result = subprocess.run(
+                ["git", "rev-parse", "--git-common-dir"],
+                cwd=base_folder,
+                capture_output=True,
+                check=True,
+                text=True,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            return None
+
+        common_dir_text = result.stdout.strip()
+        if not common_dir_text:
+            return None
+        git_common_dir = Path(common_dir_text)
+
+    if not git_common_dir.is_absolute():
+        git_common_dir = base_folder / git_common_dir
+
+    checkout_root = git_common_dir.resolve().parent
+    data_folder = checkout_root / "data"
+    if data_folder.exists():
+        return data_folder
+    return None
+
+
+def _resolve_data_folder(
+    *,
+    base_folder: Path = BASE_FOLDER,
+    environ: Mapping[str, str] | None = None,
+    git_common_dir: Path | None = None,
+) -> Path:
+    env = environ or os.environ
+    override = env.get("STOCKDATA_DATA_DIR")
+    if override:
+        data_folder = Path(override).expanduser()
+        if not data_folder.exists():
+            raise FileNotFoundError(f"STOCKDATA_DATA_DIR does not exist: {data_folder}")
+        return data_folder.resolve()
+
+    local_data_folder = base_folder / "data"
+    if _has_private_dashboard_data(local_data_folder):
+        return local_data_folder
+
+    main_data_folder = _git_common_data_folder(
+        base_folder=base_folder,
+        git_common_dir=git_common_dir,
+    )
+    if main_data_folder and _has_private_dashboard_data(main_data_folder):
+        return main_data_folder
+
+    return local_data_folder
+
+
+DATA_FOLDER = _resolve_data_folder()
 PRICES_FOLDER = DATA_FOLDER / "prices"
 LP_PRICES_FOLDER = PRICES_FOLDER / "lp_prices"
 QUERY_FOLDER = BASE_FOLDER / "queries"
