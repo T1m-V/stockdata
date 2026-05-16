@@ -46,7 +46,7 @@ def convert_transaction_json_to_csv(tx_file: Path, split_file: Path, output_file
                 "costs": 0,
                 "taxes": 0,
                 "security_name": "Corporate Action",
-                "id": f"split_{isin}_{s['start_date']}",
+                "id": f"split_{isin}_{s['start_date']}_{s['numerator']}_{s['denominator']}",
             }
         )
     df_splits = pd.DataFrame(split_rows)
@@ -56,6 +56,7 @@ def convert_transaction_json_to_csv(tx_file: Path, split_file: Path, output_file
 
     # 5. Define clean column names
     column_mapping = {
+        "id": "Transaction ID",
         "timestamp": "Date",
         "transaction_type": "Type",
         "instrument.name": "Asset Name",
@@ -78,11 +79,18 @@ def convert_transaction_json_to_csv(tx_file: Path, split_file: Path, output_file
         None
     )
 
-    # 8. Sort (Now safe to compare)
+    # 8. Merge with existing CSV rows and remove overlapping fetched rows by stable ID.
+    if output_file.exists():
+        df_existing = pd.read_csv(output_file)
+        df_final = pd.concat([df_existing, df_final], ignore_index=True)
+
+    df_final = df_final.drop_duplicates(subset=["Transaction ID"], keep="last")
+    df_final["Date"] = pd.to_datetime(df_final["Date"], format="ISO8601")
     df_final = df_final.sort_values(by="Date", ascending=False)
     df_final["Date"] = df_final["Date"].dt.strftime("%Y-%m-%d")
 
     # 9. Export
+    output_file.parent.mkdir(parents=True, exist_ok=True)
     df_final.to_csv(output_file, index=False)
     print(f"Successfully converted data to {output_file}")
 

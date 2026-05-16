@@ -55,3 +55,38 @@ def test_download_transactions_writes_valid_response(monkeypatch, tmp_path: Path
     get_getquin_transactions.download_transactions(output_file=output_file)
 
     assert json.loads(output_file.read_text(encoding="utf-8")) == data
+
+
+def test_download_transactions_defaults_to_twenty_recent_rows(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    output_file = tmp_path / "transactions_export.json"
+    data = {"data": {"transactions": {"results": [{"id": "tx_1"}]}}}
+    payloads = []
+
+    def post(*args, **kwargs):
+        payloads.append(kwargs["json"])
+        return _Response(data=data)
+
+    monkeypatch.setattr(get_getquin_transactions.requests, "post", post)
+
+    get_getquin_transactions.download_transactions(output_file=output_file)
+
+    assert payloads[0]["variables"]["limit"] == 20
+
+
+def test_download_transactions_uses_requested_limit(monkeypatch, tmp_path: Path) -> None:
+    output_file = tmp_path / "transactions_export.json"
+    data = {"data": {"transactions": {"results": [{"id": "tx_1"}]}}}
+    payloads = []
+
+    def post(*args, **kwargs):
+        payloads.append(kwargs["json"])
+        return _Response(data=data)
+
+    monkeypatch.setattr(get_getquin_transactions.requests, "post", post)
+
+    get_getquin_transactions.download_transactions(output_file=output_file, limit=500)
+
+    assert payloads[0]["variables"]["limit"] == 500
