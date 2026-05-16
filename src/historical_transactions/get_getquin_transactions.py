@@ -5,7 +5,7 @@ import requests
 
 from file_paths import GETQUIN_URL, TRANSACTION_JSON_PATH, TRANSACTION_QUERY_PATH, get_token
 
-MAX_TRANSACTIONS = 500
+DEFAULT_TRANSACTION_LIMIT = 20
 
 
 def _headers() -> dict[str, str]:
@@ -27,17 +27,17 @@ def _headers() -> dict[str, str]:
     }
 
 
-# The GraphQL query and variables
-PAYLOAD = {
-    "operationName": "getDashboardAggregatedTransactions",
-    "variables": {
-        "isin__in": [],
-        "limit": MAX_TRANSACTIONS,
-        "offset": 0,
-        "transaction_type__in": [],
-    },
-    "query": TRANSACTION_QUERY_PATH.read_text(encoding="utf-8"),
-}
+def _payload(limit: int) -> dict:
+    return {
+        "operationName": "getDashboardAggregatedTransactions",
+        "variables": {
+            "isin__in": [],
+            "limit": limit,
+            "offset": 0,
+            "transaction_type__in": [],
+        },
+        "query": TRANSACTION_QUERY_PATH.read_text(encoding="utf-8"),
+    }
 
 
 def _extract_transactions(data: dict) -> list[dict]:
@@ -53,9 +53,9 @@ def _extract_transactions(data: dict) -> list[dict]:
     return transactions["results"]
 
 
-def download_transactions(output_file: Path) -> None:
+def download_transactions(output_file: Path, limit: int = DEFAULT_TRANSACTION_LIMIT) -> None:
     print("Sending request to getquin API...")
-    response = requests.post(GETQUIN_URL, headers=_headers(), json=PAYLOAD)
+    response = requests.post(GETQUIN_URL, headers=_headers(), json=_payload(limit=limit))
     response.raise_for_status()
 
     data = response.json()

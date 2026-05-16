@@ -5,17 +5,20 @@ from file_paths import (
     TRANSACTIONS_FILE_PATH,
 )
 from historical_transactions.add_stock_splits import download_splits
-from historical_transactions.get_getquin_transactions import download_transactions
+from historical_transactions.get_getquin_transactions import (
+    DEFAULT_TRANSACTION_LIMIT,
+    download_transactions,
+)
 from historical_transactions.portfolio_snapshots import generate_portfolio_snapshots
 from historical_transactions.transform_data import convert_transaction_json_to_csv
 
 
-def main():
+def main(transaction_limit: int = DEFAULT_TRANSACTION_LIMIT):
     print("🚀 Starting Transaction Robot...")
 
     # Step 1: Update all transactions and splits.
     print("\nStep 1: Updating historical transaction data...")
-    download_transactions(output_file=TRANSACTION_JSON_PATH)
+    download_transactions(output_file=TRANSACTION_JSON_PATH, limit=transaction_limit)
     download_splits(transaction_file=TRANSACTION_JSON_PATH, output_file=STOCK_SPLIT_JSON_PATH)
 
     # Step 2: Generate the summary 'latest_prices.csv'
