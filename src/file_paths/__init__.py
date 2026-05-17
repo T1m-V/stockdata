@@ -62,16 +62,22 @@ def _resolve_data_folder(
     git_common_dir: Path | None = None,
 ) -> Path:
     env = os.environ if environ is None else environ
-    override = env.get("STOCKDATA_DATA_DIR")
+    override = env.get("STOCKDATA_DATA_DIR") or env.get("STOCKDATA_DATA_FOLDER")
     if override:
         data_folder = Path(override).expanduser()
         if not data_folder.exists():
-            raise FileNotFoundError(f"STOCKDATA_DATA_DIR does not exist: {data_folder}")
+            raise FileNotFoundError(
+                f"Configured stockdata data folder does not exist: {data_folder}"
+            )
         return data_folder.resolve()
 
     local_data_folder = base_folder / "data"
     if _has_private_dashboard_data(local_data_folder):
         return local_data_folder
+
+    sibling_main_data = base_folder.parent / "stockdata" / "data"
+    if base_folder.name != "stockdata" and _has_private_dashboard_data(sibling_main_data):
+        return sibling_main_data
 
     main_data_folder = _git_common_data_folder(
         base_folder=base_folder,
@@ -137,6 +143,8 @@ BLOCKCHAIN_TRANSACTIONS_FOLDER = BLOCKCHAIN_FOLDER / "transactions"
 BLOCKCHAIN_SNAPSHOT_FOLDER = BLOCKCHAIN_FOLDER / "snapshots"
 BLOCKCHAIN_BLOCK_MAP_FOLDER = BLOCKCHAIN_FOLDER / "block_map"
 PROTOCOL_UNDERLYING_TOKEN_FOLDER = BLOCKCHAIN_FOLDER / "protocol_underlying_tokens"
+BLOCKCHAIN_ACCOUNTING_FOLDER = BLOCKCHAIN_FOLDER / "accounting"
+BLOCKCHAIN_DASHBOARD_FOLDER = BLOCKCHAIN_FOLDER / "dashboard"
 
 # Real estate related paths
 REAL_ESTATE_FOLDER = DATA_FOLDER / "real_estate"
