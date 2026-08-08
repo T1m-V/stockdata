@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Arbitrum Principal Flow Explainer</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f5ef;
+        --ink: #1c2430;
+        --muted: #5c6675;
+        --line: #d7d3c8;
+        --panel: #ffffff;
+        --quantity: #2f6f9f;
+        --principal: #2d7d5f;
+        --mixed: #a56018;
+        --debt: #9a3843;
+        --soft-blue: #e8f1f8;
+        --soft-green: #e8f4ec;
+        --soft-amber: #f7ead8;
+        --soft-red: #f7e4e7;
+        --shadow: 0 16px 36px rgb(28 36 48 / 10%);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.45;
+      }
+
+      header {
+        padding: 48px clamp(20px, 6vw, 72px) 32px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(90deg, rgb(255 255 255 / 90%), rgb(255 255 255 / 58%)),
+          repeating-linear-gradient(
+            90deg,
+            rgb(47 111 159 / 12%) 0,
+            rgb(47 111 159 / 12%) 1px,
+            transparent 1px,
+            transparent 40px
+          );
+      }
+
+      main {
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 34px 0 70px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        max-width: 920px;
+        font-size: clamp(40px, 7vw, 78px);
+      }
+
+      h2 {
+        font-size: clamp(28px, 4vw, 44px);
+      }
+
+      h3 {
+        font-size: 20px;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .intro {
+        max-width: 800px;
+        margin-top: 20px;
+        font-size: 18px;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 28px;
+      }
+
+      .legend span,
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 32px;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgb(255 255 255 / 74%);
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 650;
+        white-space: nowrap;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--quantity);
+      }
+
+      .dot.principal {
+        background: var(--principal);
+      }
+
+      .dot.mixed {
+        background: var(--mixed);
+      }
+
+      .dot.debt {
+        background: var(--debt);
+      }
+
+      .rule-band {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+        gap: 28px;
+        align-items: stretch;
+        margin-bottom: 34px;
+      }
+
+      .rule-copy {
+        padding: 30px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+
+      .rule-list {
+        display: grid;
+        gap: 14px;
+        margin-top: 20px;
+      }
+
+      .rule-item {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .rule-item b {
+        color: var(--ink);
+      }
+
+      .badge {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--soft-blue);
+        color: var(--quantity);
+        font-weight: 800;
+      }
+
+      .map {
+        padding: 28px;
+        border: 1px solid var(--line);
+        background: #fbfaf6;
+      }
+
+      .map svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: end;
+        margin: 42px 0 18px;
+        padding-top: 10px;
+        border-top: 1px solid var(--line);
+      }
+
+      .section-head p {
+        max-width: 600px;
+      }
+
+      .examples {
+        display: grid;
+        gap: 22px;
+      }
+
+      .example {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+
+      .example-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 22px 24px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .example-header p {
+        max-width: 680px;
+      }
+
+      .lanes {
+        display: grid;
+        gap: 14px;
+        padding: 22px 24px 24px;
+      }
+
+      .lane {
+        display: grid;
+        grid-template-columns: 130px 1fr;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .lane-label {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .steps {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(130px, 1fr);
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 3px;
+      }
+
+      .node {
+        position: relative;
+        min-height: 68px;
+        padding: 13px 14px;
+        border: 1px solid currentcolor;
+        border-radius: 8px;
+        background: #fff;
+        color: var(--quantity);
+      }
+
+      .principal-lane .node {
+        color: var(--principal);
+      }
+
+      .mixed-lane .node {
+        color: var(--mixed);
+      }
+
+      .debt-lane .node {
+        color: var(--debt);
+      }
+
+      .node::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -13px;
+        width: 13px;
+        height: 1px;
+        background: currentcolor;
+      }
+
+      .node:last-child::after {
+        display: none;
+      }
+
+      .node strong {
+        display: block;
+        color: var(--ink);
+        font-size: 14px;
+      }
+
+      .node small {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .hold {
+        background: var(--soft-blue);
+      }
+
+      .principal-lane .hold {
+        background: var(--soft-green);
+      }
+
+      .mixed-lane .hold {
+        background: var(--soft-amber);
+      }
+
+      .debt-lane .hold {
+        background: var(--soft-red);
+      }
+
+      .notes {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      .note {
+        padding: 16px 0 0;
+        border-top: 3px solid var(--line);
+      }
+
+      .note b {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .ledger-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 18px;
+        font-size: 14px;
+      }
+
+      .ledger-table th,
+      .ledger-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .ledger-table th {
+        color: var(--ink);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      .callout {
+        margin-top: 34px;
+        padding: 24px;
+        border-left: 6px solid var(--principal);
+        background: #ffffff;
+        box-shadow: var(--shadow);
+      }
+
+      .callout h2 {
+        font-size: clamp(24px, 3vw, 34px);
+      }
+
+      code {
+        padding: 2px 5px;
+        border-radius: 5px;
+        background: #eee9dd;
+        color: #263241;
+        font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+        font-size: 0.92em;
+      }
+
+      @media (max-width: 860px) {
+        .rule-band {
+          grid-template-columns: 1fr;
+        }
+
+        .section-head,
+        .example-header {
+          display: grid;
+        }
+
+        .lane {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .lane-label {
+          min-height: auto;
+        }
+
+        .notes {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        header,
+        main {
+          width: 100%;
+          padding-left: 24px;
+          padding-right: 24px;
+        }
+
+        .example,
+        .rule-copy,
+        .callout {
+          box-shadow: none;
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Principal Movement In Arbitrum Positions</h1>
+      <p class="intro">
+        The dashboard tracks two ledgers at once. Quantity follows the token actually held.
+        Principal follows the economic family when the exposure is clearly one family; otherwise it
+        stays on the active wrapper until accounting can split it.
+      </p>
+      <div class="legend" aria-label="Legend">
+        <span><i class="dot"></i>Quantity ledger</span>
+        <span><i class="dot principal"></i>Principal ledger</span>
+        <span><i class="dot mixed"></i>Mixed LP rule</span>
+        <span><i class="dot debt"></i>Aave debt rule</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="rule-band" aria-labelledby="core-rule">
+        <div class="rule-copy">
+          <h2 id="core-rule">The Core Rule</h2>
+          <div class="rule-list">
+            <div class="rule-item">
+              <div class="badge">1</div>
+              <p>
+                <b>Quantity is literal.</b> If the wallet holds <code>aArbwstETH</code>, raw
+                snapshots show quantity on <code>aArbwstETH</code>, not ETH.
+              </p>
+            </div>
+            <div class="rule-item">
+              <div class="badge">2</div>
+              <p>
+                <b>Principal is economic.</b> If every terminal component resolves to one family,
+                principal is redirected to that family, like <code>WETH</code> and
+                <code>wstETH</code> ending on ETH.
+              </p>
+            </div>
+            <div class="rule-item">
+              <div class="badge">3</div>
+              <p>
+                <b>Mixed LPs stay active.</b> A USDC/USDT LP keeps principal on the LP in raw
+                snapshots. Accounting expands it into USDC and USDT for dashboard reporting.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="map" aria-label="High level data flow">
+          <svg viewBox="0 0 680 420" role="img" aria-labelledby="map-title map-desc">
+            <title id="map-title">Data flow map</title>
+            <desc id="map-desc">
+              Transactions create raw snapshots, raw snapshots feed accounting, and accounting feeds
+              the dashboard.
+            </desc>
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+                <path d="M0,0 L10,5 L0,10 Z" fill="#5c6675"></path>
+              </marker>
+            </defs>
+            <rect x="38" y="42" width="170" height="74" rx="8" fill="#e8f1f8" stroke="#2f6f9f"></rect>
+            <text x="64" y="75" font-size="18" font-weight="700" fill="#1c2430">Transactions</text>
+            <text x="64" y="98" font-size="13" fill="#5c6675">swaps, sends, receives</text>
+
+            <rect x="268" y="42" width="170" height="74" rx="8" fill="#e8f4ec" stroke="#2d7d5f"></rect>
+            <text x="300" y="75" font-size="18" font-weight="700" fill="#1c2430">Raw snapshots</text>
+            <text x="300" y="98" font-size="13" fill="#5c6675">quantity + principal</text>
+
+            <rect x="498" y="42" width="144" height="74" rx="8" fill="#fff" stroke="#d7d3c8"></rect>
+            <text x="531" y="75" font-size="18" font-weight="700" fill="#1c2430">Dashboard</text>
+            <text x="531" y="98" font-size="13" fill="#5c6675">P/L by base</text>
+
+            <path d="M208 79 H266" stroke="#5c6675" stroke-width="2" marker-end="url(#arrow)"></path>
+            <path d="M438 79 H496" stroke="#5c6675" stroke-width="2" marker-end="url(#arrow)"></path>
+
+            <path d="M353 132 V186" stroke="#5c6675" stroke-width="2" marker-end="url(#arrow)"></path>
+            <rect x="198" y="190" width="310" height="92" rx="8" fill="#fbfaf6" stroke="#d7d3c8"></rect>
+            <text x="226" y="224" font-size="17" font-weight="700" fill="#1c2430">Principal proxy resolver</text>
+            <text x="226" y="249" font-size="13" fill="#5c6675">All terminal families equal?</text>
+            <text x="226" y="269" font-size="13" fill="#5c6675">Yes: redirect principal. No: keep wrapper principal.</text>
+
+            <path d="M353 282 V334" stroke="#5c6675" stroke-width="2" marker-end="url(#arrow)"></path>
+            <rect x="208" y="338" width="290" height="52" rx="8" fill="#f7ead8" stroke="#a56018"></rect>
+            <text x="241" y="371" font-size="16" font-weight="700" fill="#1c2430">Accounting expands exposure for P/L</text>
+          </svg>
+        </div>
+      </section>
+
+      <section aria-labelledby="flows">
+        <div class="section-head">
+          <h2 id="flows">Common Flows</h2>
+          <p>
+            Read each example as two synchronized lanes. The top lane answers "what token do I
+            hold?" The bottom lane answers "where is the cost basis?"
+          </p>
+        </div>
+
+        <div class="examples">
+          <article class="example">
+            <div class="example-header">
+              <div>
+                <h3>1. Wrapper or Liquid Staking Asset</h3>
+                <p>Useful for WETH, wstETH, and similar one-family transformations.</p>
+              </div>
+              <span class="tag">single family</span>
+            </div>
+            <div class="lanes">
+              <div class="lane">
+                <div class="lane-label">Quantity</div>
+                <div class="steps">
+                  <div class="node hold"><strong>ETH</strong><small>actual wallet token</small></div>
+                  <div class="node hold"><strong>WETH</strong><small>wrapped token</small></div>
+                  <div class="node hold"><strong>wstETH</strong><small>liquid staking token</small></div>
+                </div>
+              </div>
+              <div class="lane principal-lane">
+                <div class="lane-label">Principal</div>
+                <div class="steps">
+                  <div class="node hold"><strong>ETH</strong><small>initial cost basis</small></div>
+                  <div class="node hold"><strong>ETH</strong><small>family proxy</small></div>
+                  <div class="node hold"><strong>ETH</strong><small>still same family</small></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="example">
+            <div class="example-header">
+              <div>
+                <h3>2. Nested ETH LP, Then Beefy</h3>
+                <p>
+                  This is the Dec 18 style shape. The LP contains WETH and wstETH, which both
+                  terminate on ETH.
+                </p>
+              </div>
+              <span class="tag">recursive single family</span>
+            </div>
+            <div class="lanes">
+              <div class="lane">
+                <div class="lane-label">Quantity</div>
+                <div class="steps">
+                  <div class="node hold"><strong>ETH</strong><small>start</small></div>
+                  <div class="node hold"><strong>wstETH-WETH-BPT</strong><small>Balancer LP</small></div>
+                  <div class="node hold"><strong>mooBalancer...</strong><small>Beefy wrapper</small></div>
+                  <div class="node hold"><strong>wstETH</strong><small>withdrawn</small></div>
+                  <div class="node hold"><strong>aArbwstETH</strong><small>Aave supply</small></div>
+                </div>
+              </div>
+              <div class="lane principal-lane">
+                <div class="lane-label">Principal</div>
+                <div class="steps">
+                  <div class="node hold"><strong>ETH</strong><small>base cost</small></div>
+                  <div class="node hold"><strong>ETH</strong><small>WETH + wstETH resolve to ETH</small></div>
+                  <div class="node hold"><strong>ETH</strong><small>Beefy unwraps to same family</small></div>
+                  <div class="node hold"><strong>ETH</strong><small>no intermediate residue</small></div>
+                  <div class="node hold"><strong>ETH</strong><small>Aave supply proxy</small></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="example">
+            <div class="example-header">
+              <div>
+                <h3>3. Mixed LP</h3>
+                <p>
+                  A mixed LP does not have one economic family, so raw principal remains on the
+                  active LP position.
+                </p>
+              </div>
+              <span class="tag">split in accounting</span>
+            </div>
+            <div class="lanes">
+              <div class="lane">
+                <div class="lane-label">Quantity</div>
+                <div class="steps">
+                  <div class="node hold"><strong>USDC</strong><small>start</small></div>
+                  <div class="node hold"><strong>mooFishUSDT-USDC</strong><small>mixed LP wrapper</small></div>
+                  <div class="node hold"><strong>USDC + USDT</strong><small>dashboard exposure</small></div>
+                </div>
+              </div>
+              <div class="lane mixed-lane">
+                <div class="lane-label">Principal</div>
+                <div class="steps">
+                  <div class="node hold"><strong>USDC</strong><small>before deposit</small></div>
+                  <div class="node hold"><strong>mooFishUSDT-USDC</strong><small>raw snapshot holder</small></div>
+                  <div class="node hold"><strong>USDC + USDT</strong><small>accounting split by value weights</small></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="example">
+            <div class="example-header">
+              <div>
+                <h3>4. Aave Supply Token</h3>
+                <p>
+                  Aave supply wrappers keep quantity on the aToken, while principal goes through
+                  the underlying and then to the final base family.
+                </p>
+              </div>
+              <span class="tag">supply proxy</span>
+            </div>
+            <div class="lanes">
+              <div class="lane">
+                <div class="lane-label">Quantity</div>
+                <div class="steps">
+                  <div class="node hold"><strong>wstETH</strong><small>token supplied</small></div>
+                  <div class="node hold"><strong>aArbwstETH</strong><small>actual held token</small></div>
+                  <div class="node hold"><strong>Aave overlay</strong><small>net_wstETH quantity</small></div>
+                </div>
+              </div>
+              <div class="lane principal-lane">
+                <div class="lane-label">Principal</div>
+                <div class="steps">
+                  <div class="node hold"><strong>ETH</strong><small>wstETH family</small></div>
+                  <div class="node hold"><strong>ETH</strong><small>aToken supply proxy</small></div>
+                  <div class="node hold"><strong>ETH</strong><small>base P/L combines value + cost</small></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="example">
+            <div class="example-header">
+              <div>
+                <h3>5. Aave Debt Token</h3>
+                <p>
+                  Debt tokens are not treated like supply wrappers. Accounting signs them negative
+                  and keeps the debt behavior separate.
+                </p>
+              </div>
+              <span class="tag">signed debt</span>
+            </div>
+            <div class="lanes">
+              <div class="lane">
+                <div class="lane-label">Quantity</div>
+                <div class="steps">
+                  <div class="node hold"><strong>variableDebtArbLINK</strong><small>debt token</small></div>
+                  <div class="node hold"><strong>LINK</strong><small>dashboard base exposure</small></div>
+                </div>
+              </div>
+              <div class="lane debt-lane">
+                <div class="lane-label">Principal</div>
+                <div class="steps">
+                  <div class="node hold"><strong>debt principal</strong><small>not supply-proxied</small></div>
+                  <div class="node hold"><strong>negative LINK row</strong><small>signed in accounting</small></div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="raw-vs-dashboard">
+        <div class="section-head">
+          <h2 id="raw-vs-dashboard">Raw Versus Dashboard</h2>
+          <p>
+            Raw snapshots preserve position mechanics. Accounting converts those mechanics into base
+            exposure rows for P/L.
+          </p>
+        </div>
+
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>What it stores</th>
+              <th>Example</th>
+              <th>Why it matters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Raw snapshots</td>
+              <td>Actual token quantity and the current principal holder.</td>
+              <td><code>aArbwstETH</code> quantity, <code>ETH</code> principal.</td>
+              <td>Lets transfers and unwraps avoid creating artificial realized P/L.</td>
+            </tr>
+            <tr>
+              <td>Accounting source rows</td>
+              <td>Expanded base exposure per source.</td>
+              <td><code>Aave -> ETH</code> market value with <code>ETH</code> principal elsewhere.</td>
+              <td>Combines wrappers, protocols, and direct tokens into comparable base assets.</td>
+            </tr>
+            <tr>
+              <td>Dashboard asset rows</td>
+              <td>Base selection totals and P/L.</td>
+              <td><code>ETH ProfitLossEUR = MarketValueEUR - PrincipalInvestedEUR</code>.</td>
+              <td>Shows economic result instead of wrapper mechanics.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="notes">
+          <div class="note">
+            <b>Deposits are transformations.</b>
+            <p>Moving into a wrapper or Aave supply token should not realize a gain or loss by itself.</p>
+          </div>
+          <div class="note">
+            <b>Prices still move P/L.</b>
+            <p>Once principal is stable, daily P/L changes should mainly come from market value changes.</p>
+          </div>
+          <div class="note">
+            <b>Mixed baskets need weights.</b>
+            <p>When there is no single base family, accounting uses component values to allocate principal.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="callout" aria-labelledby="debug-rule">
+        <h2 id="debug-rule">Debugging Shortcut</h2>
+        <p>
+          If P/L jumps on a wrapper deposit or withdrawal day, compare the base asset's
+          <code>MarketValueEUR</code> delta with its <code>PrincipalInvestedEUR</code> delta. A
+          price move changes market value. A synthetic cliff usually means principal appeared,
+          disappeared, or moved to an intermediate wrapper at the wrong layer.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
